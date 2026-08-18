@@ -1,11 +1,9 @@
 from backend.app.services.kpi_engine import get_kpi_dashboard
+from backend.app.services.performance import get_monthly_performance
+from backend.app.services.financial_analysis import get_monthly_revenue
 
 
 def generate_revenue_insight(month: str):
-    """
-    Generate a deterministic revenue insight for a given month.
-    """
-
     kpi = get_kpi_dashboard(month)
 
     revenue = kpi["revenue"]
@@ -16,137 +14,100 @@ def generate_revenue_insight(month: str):
     order_change = orders["growth_percent"]
     aov_change = aov["growth_percent"]
 
-    # ---------------------------------------------
-    # REVENUE DIRECTION
-    # ---------------------------------------------
-
     if revenue_change is None:
-        direction = "Revenue performance is unavailable"
+        summary = "Revenue performance is unavailable."
+        primary_driver = "unknown"
+        driver_explanation = (
+            "There is insufficient data to identify the revenue driver."
+        )
 
     elif revenue_change < 0:
-        direction = "Revenue declined"
+        summary = (
+            f"Revenue declined by {abs(revenue_change):.2f}% "
+            f"compared with the previous month."
+        )
+
+        if (
+            order_change is not None
+            and aov_change is not None
+        ):
+            if abs(order_change) > abs(aov_change):
+                primary_driver = "order_volume"
+                driver_explanation = (
+                    f"Order volume was the stronger driver, "
+                    f"changing by {order_change:.2f}% compared "
+                    f"with an AOV change of {aov_change:.2f}%."
+                )
+            elif abs(aov_change) > abs(order_change):
+                primary_driver = "aov"
+                driver_explanation = (
+                    f"AOV was the stronger driver, changing by "
+                    f"{aov_change:.2f}% compared with an order "
+                    f"volume change of {order_change:.2f}%."
+                )
+            else:
+                primary_driver = "mixed"
+                driver_explanation = (
+                    "Order volume and AOV changed by similar magnitudes."
+                )
+        else:
+            primary_driver = "unknown"
+            driver_explanation = (
+                "There is insufficient data to identify a dominant driver."
+            )
 
     elif revenue_change > 0:
-        direction = "Revenue increased"
+        summary = (
+            f"Revenue increased by {revenue_change:.2f}% "
+            f"compared with the previous month."
+        )
 
-    else:
-        direction = "Revenue remained stable"
-
-    # ---------------------------------------------
-    # DRIVER DETECTION
-    # ---------------------------------------------
-
-    if (
-        order_change is not None
-        and aov_change is not None
-    ):
-
-        order_impact = abs(order_change)
-        aov_impact = abs(aov_change)
-
-        if order_impact > aov_impact:
-
-            primary_driver = "order_volume"
-
-            driver_explanation = (
-                f"Order volume was the stronger driver, "
-                f"changing by {order_change:.2f}% compared "
-                f"with an AOV change of {aov_change:.2f}%."
-            )
-
-        elif aov_impact > order_impact:
-
-            primary_driver = "aov"
-
-            driver_explanation = (
-                f"Average order value was the stronger driver, "
-                f"changing by {aov_change:.2f}% compared "
-                f"with an order volume change of "
-                f"{order_change:.2f}%."
-            )
-
+        if (
+            order_change is not None
+            and aov_change is not None
+        ):
+            if abs(order_change) > abs(aov_change):
+                primary_driver = "order_volume"
+                driver_explanation = (
+                    f"Order volume was the stronger contributor, "
+                    f"changing by {order_change:.2f}%."
+                )
+            elif abs(aov_change) > abs(order_change):
+                primary_driver = "aov"
+                driver_explanation = (
+                    f"AOV was the stronger contributor, "
+                    f"changing by {aov_change:.2f}%."
+                )
+            else:
+                primary_driver = "mixed"
+                driver_explanation = (
+                    "Order volume and AOV contributed similarly."
+                )
         else:
-
-            primary_driver = "mixed"
-
+            primary_driver = "unknown"
             driver_explanation = (
-                "Order volume and average order value "
-                "changed by similar magnitudes."
+                "There is insufficient data to identify a dominant driver."
             )
 
     else:
-
-        primary_driver = "unknown"
-
-        driver_explanation = (
-            "There was insufficient data to identify "
-            "a dominant revenue driver."
-        )
-
-    # ---------------------------------------------
-    # DELIVERY CONTEXT
-    # ---------------------------------------------
-
-    delivery_rate = kpi["delivery"]["rate_percent"]
-
-    cancellation_rate = (
-        kpi["cancellation"]["rate_percent"]
-    )
-
-    if delivery_rate >= 98:
-
-        operational_context = (
-            f"Delivery performance remained strong at "
-            f"{delivery_rate:.2f}%."
-        )
-
-    else:
-
-        operational_context = (
-            f"Delivery performance was "
-            f"{delivery_rate:.2f}%."
-        )
-
-    # ---------------------------------------------
-    # RETURN
-    # ---------------------------------------------
+        summary = "Revenue remained stable compared with the previous month."
+        primary_driver = "none"
+        driver_explanation = "There was no meaningful revenue change."
 
     return {
+        "type": "revenue",
         "period": month,
-
-        "summary": (
-            f"{direction} by "
-            f"{abs(revenue_change):.2f}% "
-            f"compared with the previous month."
-            if revenue_change is not None
-            else direction
-        ),
-
+        "summary": summary,
         "revenue_change_percent": revenue_change,
-
         "order_change_percent": order_change,
-
         "aov_change_percent": aov_change,
-
         "primary_driver": primary_driver,
-
         "driver_explanation": driver_explanation,
-
-        "delivery_rate": delivery_rate,
-
-        "cancellation_rate": cancellation_rate,
-
-        "operational_context": operational_context,
-
         "data_quality": kpi["data_quality"],
     }
 
 
-def generate_order_insight(month: str):
-    """
-    Generate a deterministic order-volume insight.
-    """
-
+def generate_orders_insight(month: str):
     kpi = get_kpi_dashboard(month)
 
     orders = kpi["orders"]
@@ -156,428 +117,308 @@ def generate_order_insight(month: str):
     order_change = orders["growth_percent"]
 
     if order_change is None:
-
         summary = (
-            "Order performance is unavailable."
+            f"{current_orders:,} orders were recorded in {month}."
         )
-
         direction = "unavailable"
-
     elif order_change < 0:
-
         summary = (
-            f"Orders declined by "
-            f"{abs(order_change):.2f}% compared "
-            f"with the previous month."
+            f"Orders declined by {abs(order_change):.2f}% "
+            f"from {previous_orders:,} to {current_orders:,}."
         )
-
         direction = "declined"
-
     elif order_change > 0:
-
         summary = (
-            f"Orders increased by "
-            f"{order_change:.2f}% compared "
-            f"with the previous month."
+            f"Orders increased by {order_change:.2f}% "
+            f"from {previous_orders:,} to {current_orders:,}."
         )
-
         direction = "increased"
-
     else:
-
         summary = (
-            "Order volume remained stable "
-            "compared with the previous month."
+            f"Orders remained stable at {current_orders:,}."
         )
-
         direction = "stable"
 
     return {
+        "type": "orders",
         "period": month,
         "summary": summary,
-        "direction": direction,
-        "current_orders": current_orders,
+        "orders": current_orders,
         "previous_orders": previous_orders,
         "order_change_percent": order_change,
+        "direction": direction,
         "data_quality": kpi["data_quality"],
     }
 
 
 def generate_delivery_insight(month: str):
-    """
-    Generate a deterministic delivery-performance insight.
-    """
-
     kpi = get_kpi_dashboard(month)
 
     delivery = kpi["delivery"]
 
     delivery_rate = delivery["rate_percent"]
     delivered_orders = delivery["delivered_orders"]
+    total_orders = kpi["orders"]["value"]
 
-    if delivery_rate is None:
-
-        performance = "unavailable"
-
-        summary = (
-            "Delivery performance is unavailable."
-        )
-
-    elif delivery_rate >= 98:
-
-        performance = "strong"
-
-        summary = (
-            f"Delivery performance was strong at "
-            f"{delivery_rate:.2f}%."
-        )
-
+    if delivery_rate >= 98:
+        assessment = "strong"
     elif delivery_rate >= 95:
-
-        performance = "acceptable"
-
-        summary = (
-            f"Delivery performance was "
-            f"{delivery_rate:.2f}%."
-        )
-
+        assessment = "healthy"
+    elif delivery_rate >= 90:
+        assessment = "needs_attention"
     else:
-
-        performance = "weak"
-
-        summary = (
-            f"Delivery performance was relatively weak "
-            f"at {delivery_rate:.2f}%."
-        )
+        assessment = "weak"
 
     return {
+        "type": "delivery",
         "period": month,
-        "summary": summary,
-        "performance": performance,
+        "summary": (
+            f"Delivery rate was {delivery_rate:.2f}%, "
+            f"with {delivered_orders:,} delivered orders "
+            f"out of {total_orders:,}."
+        ),
         "delivery_rate_percent": delivery_rate,
         "delivered_orders": delivered_orders,
+        "total_orders": total_orders,
+        "assessment": assessment,
         "data_quality": kpi["data_quality"],
     }
 
 
 def generate_cancellation_insight(month: str):
-    """
-    Generate a deterministic cancellation insight.
-    """
-
     kpi = get_kpi_dashboard(month)
 
     cancellation = kpi["cancellation"]
 
     cancellation_rate = cancellation["rate_percent"]
     cancelled_orders = cancellation["cancelled_orders"]
+    total_orders = kpi["orders"]["value"]
 
-    if cancellation_rate is None:
-
-        severity = "unavailable"
-
-        summary = (
-            "Cancellation performance is unavailable."
-        )
-
-    elif cancellation_rate >= 5:
-
-        severity = "high"
-
-        summary = (
-            f"Cancellation rate was high at "
-            f"{cancellation_rate:.2f}%."
-        )
-
-    elif cancellation_rate >= 2:
-
-        severity = "moderate"
-
-        summary = (
-            f"Cancellation rate was moderate at "
-            f"{cancellation_rate:.2f}%."
-        )
-
+    if cancellation_rate <= 1:
+        assessment = "low"
+    elif cancellation_rate <= 3:
+        assessment = "moderate"
+    elif cancellation_rate <= 5:
+        assessment = "high"
     else:
-
-        severity = "low"
-
-        summary = (
-            f"Cancellation rate remained low at "
-            f"{cancellation_rate:.2f}%."
-        )
+        assessment = "critical"
 
     return {
+        "type": "cancellation",
         "period": month,
-        "summary": summary,
-        "severity": severity,
+        "summary": (
+            f"Cancellation rate was {cancellation_rate:.2f}%, "
+            f"with {cancelled_orders:,} cancelled orders "
+            f"out of {total_orders:,}."
+        ),
         "cancellation_rate_percent": cancellation_rate,
         "cancelled_orders": cancelled_orders,
+        "total_orders": total_orders,
+        "assessment": assessment,
         "data_quality": kpi["data_quality"],
     }
 
 
-def generate_aov_insight(month: str):
-    """
-    Generate a deterministic Average Order Value insight.
-    """
+def generate_trend_insight(month: str):
+    revenue_df = get_monthly_revenue()
 
-    kpi = get_kpi_dashboard(month)
+    valid_data = revenue_df[
+        revenue_df["month"] != "2018-09"
+    ].copy()
 
-    aov = kpi["aov"]
+    if valid_data.empty:
+        return {
+            "type": "trends",
+            "period": month,
+            "summary": "Insufficient historical data to identify trends.",
+            "trends": [],
+        }
 
-    current_aov = aov["value"]
-    previous_aov = aov["previous_value"]
-    aov_change = aov["growth_percent"]
+    highest_revenue = valid_data.loc[
+        valid_data["revenue"].idxmax()
+    ]
 
-    if aov_change is None:
+    lowest_revenue = valid_data.loc[
+        valid_data["revenue"].idxmin()
+    ]
 
-        direction = "unavailable"
+    highest_orders = valid_data.loc[
+        valid_data["orders"].idxmax()
+    ]
 
-        summary = (
-            "Average order value is unavailable."
-        )
-
-    elif aov_change < 0:
-
-        direction = "declined"
-
-        summary = (
-            f"Average order value declined by "
-            f"{abs(aov_change):.2f}%."
-        )
-
-    elif aov_change > 0:
-
-        direction = "increased"
-
-        summary = (
-            f"Average order value increased by "
-            f"{aov_change:.2f}%."
-        )
-
-    else:
-
-        direction = "stable"
-
-        summary = (
-            "Average order value remained stable."
-        )
+    trends = [
+        {
+            "metric": "revenue",
+            "pattern": (
+                f"Highest revenue was recorded in "
+                f"{highest_revenue['month']}."
+            ),
+            "value": float(highest_revenue["revenue"]),
+        },
+        {
+            "metric": "revenue",
+            "pattern": (
+                f"Lowest complete-month revenue was recorded in "
+                f"{lowest_revenue['month']}."
+            ),
+            "value": float(lowest_revenue["revenue"]),
+        },
+        {
+            "metric": "orders",
+            "pattern": (
+                f"Highest order volume was recorded in "
+                f"{highest_orders['month']}."
+            ),
+            "value": int(highest_orders["orders"]),
+        },
+    ]
 
     return {
+        "type": "trends",
         "period": month,
-        "summary": summary,
-        "direction": direction,
-        "current_aov": current_aov,
-        "previous_aov": previous_aov,
-        "aov_change_percent": aov_change,
-        "data_quality": kpi["data_quality"],
+        "summary": (
+            f"Historical data shows meaningful variation in revenue "
+            f"and order volume across months."
+        ),
+        "trends": trends,
+    }
+
+
+def generate_performance_insight(month: str):
+    performance = get_monthly_performance()
+
+    valid_data = performance[
+        performance["month"] != "2018-09"
+    ].copy()
+
+    if valid_data.empty:
+        return {
+            "type": "performance",
+            "period": month,
+            "summary": "Performance data is unavailable.",
+        }
+
+    best_revenue = valid_data.loc[
+        valid_data["revenue"].idxmax()
+    ]
+
+    best_orders = valid_data.loc[
+        valid_data["orders"].idxmax()
+    ]
+
+    best_delivery = valid_data.loc[
+        valid_data["delivery_rate"].idxmax()
+    ]
+
+    return {
+        "type": "performance",
+        "period": month,
+        "summary": (
+            f"Best revenue performance occurred in "
+            f"{best_revenue['month']}, while the highest order "
+            f"volume occurred in {best_orders['month']}."
+        ),
+        "best_revenue_month": best_revenue["month"],
+        "best_revenue": float(best_revenue["revenue"]),
+        "best_orders_month": best_orders["month"],
+        "best_orders": int(best_orders["orders"]),
+        "best_delivery_month": best_delivery["month"],
+        "best_delivery_rate": float(best_delivery["delivery_rate"]),
     }
 
 
 def generate_business_health_insight(month: str):
-    """
-    Generate a deterministic overall business-health assessment.
-    """
-
     kpi = get_kpi_dashboard(month)
 
-    revenue_change = (
-        kpi["revenue"]["growth_percent"]
-    )
+    revenue_change = kpi["revenue"]["growth_percent"]
+    order_change = kpi["orders"]["growth_percent"]
+    delivery_rate = kpi["delivery"]["rate_percent"]
+    cancellation_rate = kpi["cancellation"]["rate_percent"]
 
-    order_change = (
-        kpi["orders"]["growth_percent"]
-    )
+    priorities = []
 
-    delivery_rate = (
-        kpi["delivery"]["rate_percent"]
-    )
-
-    cancellation_rate = (
-        kpi["cancellation"]["rate_percent"]
-    )
-
-    strengths = []
-    risks = []
-
-    # ---------------------------------------------
-    # COMMERCIAL PERFORMANCE
-    # ---------------------------------------------
-
-    if (
-        revenue_change is not None
-        and revenue_change < 0
-    ):
-        risks.append(
-            f"Revenue declined by "
-            f"{abs(revenue_change):.2f}%."
+    if revenue_change is not None and revenue_change <= -10:
+        priorities.append(
+            "Investigate the significant decline in revenue."
         )
 
-    elif (
-        revenue_change is not None
-        and revenue_change > 0
-    ):
-        strengths.append(
-            f"Revenue increased by "
-            f"{revenue_change:.2f}%."
+    if order_change is not None and order_change <= -10:
+        priorities.append(
+            "Investigate the decline in order volume."
         )
 
-    # ---------------------------------------------
-    # ORDER PERFORMANCE
-    # ---------------------------------------------
-
-    if (
-        order_change is not None
-        and order_change < 0
-    ):
-        risks.append(
-            f"Order volume declined by "
-            f"{abs(order_change):.2f}%."
+    if delivery_rate < 95:
+        priorities.append(
+            "Improve delivery performance."
         )
 
-    elif (
-        order_change is not None
-        and order_change > 0
-    ):
-        strengths.append(
-            f"Order volume increased by "
-            f"{order_change:.2f}%."
+    if cancellation_rate > 3:
+        priorities.append(
+            "Investigate elevated cancellation levels."
         )
 
-    # ---------------------------------------------
-    # OPERATIONS
-    # ---------------------------------------------
-
-    if (
-        delivery_rate is not None
-        and delivery_rate >= 98
-    ):
-        strengths.append(
-            f"Delivery performance remained strong "
-            f"at {delivery_rate:.2f}%."
+    if not priorities:
+        priorities.append(
+            "Maintain current performance while monitoring "
+            "revenue, orders and operational KPIs."
         )
-
-    elif delivery_rate is not None:
-        risks.append(
-            f"Delivery performance was "
-            f"{delivery_rate:.2f}%."
-        )
-
-    # ---------------------------------------------
-    # CANCELLATIONS
-    # ---------------------------------------------
-
-    if (
-        cancellation_rate is not None
-        and cancellation_rate >= 2
-    ):
-        risks.append(
-            f"Cancellation rate was "
-            f"{cancellation_rate:.2f}%."
-        )
-
-    elif cancellation_rate is not None:
-        strengths.append(
-            f"Cancellation rate remained low "
-            f"at {cancellation_rate:.2f}%."
-        )
-
-    # ---------------------------------------------
-    # OVERALL STATUS
-    # ---------------------------------------------
-
-    if len(risks) >= 2:
-
-        overall_status = "needs_attention"
-
-    elif len(risks) == 1:
-
-        overall_status = "mixed"
-
-    else:
-
-        overall_status = "healthy"
 
     return {
+        "type": "business_health",
         "period": month,
-        "overall_status": overall_status,
-        "strengths": strengths,
-        "risks": risks,
+        "summary": "Business health assessment based on current KPIs.",
+        "priorities": priorities,
+        "revenue_change_percent": revenue_change,
+        "order_change_percent": order_change,
+        "delivery_rate_percent": delivery_rate,
+        "cancellation_rate_percent": cancellation_rate,
         "data_quality": kpi["data_quality"],
     }
 
 
 def generate_business_insights(month: str):
     """
-    Generate deterministic business insights across
-    all major business dimensions.
+    Generate deterministic insights across all supported
+    business dimensions.
     """
 
-    revenue_insight = generate_revenue_insight(month)
-    order_insight = generate_order_insight(month)
-    delivery_insight = generate_delivery_insight(month)
-    cancellation_insight = generate_cancellation_insight(month)
-    aov_insight = generate_aov_insight(month)
-    business_health = generate_business_health_insight(month)
-
     insights = [
-        revenue_insight,
-        order_insight,
-        delivery_insight,
-        cancellation_insight,
-        aov_insight,
-        business_health,
+        generate_revenue_insight(month),
+        generate_orders_insight(month),
+        generate_delivery_insight(month),
+        generate_cancellation_insight(month),
+        generate_trend_insight(month),
+        generate_performance_insight(month),
+        generate_business_health_insight(month),
     ]
 
     high_priority = []
 
-    revenue_change = (
-        revenue_insight["revenue_change_percent"]
-    )
+    for insight in insights:
 
-    order_change = (
-        order_insight["order_change_percent"]
-    )
+        if insight["type"] == "revenue":
+            change = insight["revenue_change_percent"]
 
-    cancellation_rate = (
-        cancellation_insight[
-            "cancellation_rate_percent"
-        ]
-    )
+            if change is not None and change <= -10:
+                high_priority.append(insight)
 
-    # ---------------------------------------------
-    # HIGH-PRIORITY CONDITIONS
-    # ---------------------------------------------
+        elif insight["type"] == "orders":
+            change = insight["order_change_percent"]
 
-    if (
-        revenue_change is not None
-        and revenue_change <= -10
-    ):
-        high_priority.append(
-            revenue_insight
-        )
+            if change is not None and change <= -10:
+                high_priority.append(insight)
 
-    if (
-        order_change is not None
-        and order_change <= -10
-    ):
-        high_priority.append(
-            order_insight
-        )
+        elif insight["type"] == "delivery":
+            if insight["delivery_rate_percent"] < 95:
+                high_priority.append(insight)
 
-    if (
-        cancellation_rate is not None
-        and cancellation_rate >= 5
-    ):
-        high_priority.append(
-            cancellation_insight
-        )
+        elif insight["type"] == "cancellation":
+            if insight["cancellation_rate_percent"] > 3:
+                high_priority.append(insight)
 
     return {
         "period": month,
         "total_insights": len(insights),
         "high_priority_insights": len(high_priority),
         "insights": insights,
-        "business_health": business_health,
     }

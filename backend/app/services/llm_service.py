@@ -278,16 +278,9 @@ Do not include text outside the JSON.
         error_text = str(error)
 
         if "429" in error_text or "quota" in error_text.lower():
-
-            return {
-                "answer": (
-                    "The AI analysis service is temporarily unavailable "
-                    "because the current API quota has been reached."
-                ),
-                "evidence": [],
-                "likely_driver": "Not available while AI service is unavailable.",
-                "recommended_actions": []
-            }
+            raise RuntimeError(
+                "AI service quota exceeded"
+            ) from error
 
         raise
 
