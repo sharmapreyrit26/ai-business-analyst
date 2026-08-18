@@ -1,25 +1,5 @@
-import pandas as pd
-
 from backend.app.services.data_loader import load_orders
-
-
-ORDER_ITEMS_PATH = "data/raw/olist_order_items_dataset.csv"
-
-
-def load_order_items():
-    """
-    Load the Olist order items dataset.
-    """
-
-    df = pd.read_csv(ORDER_ITEMS_PATH)
-
-    df["shipping_limit_date"] = pd.to_datetime(
-        df["shipping_limit_date"],
-        errors="coerce"
-    )
-
-    return df
-
+from backend.app.services.revenue import load_order_items
 
 def get_order_financials():
     """
