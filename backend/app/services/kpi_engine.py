@@ -3,7 +3,9 @@ from backend.app.services.financial_analysis import (
     get_monthly_revenue_analysis,
     get_monthly_data_quality,
 )
-from backend.app.services.analytics import get_order_summary
+from backend.app.services.order_analysis import (
+    get_order_summary,
+)
 
 
 def get_kpi_dashboard(month: str = "2018-06"):

@@ -1,204 +1,233 @@
-from .performance import get_monthly_performance
+from backend.app.services.financial_analysis import (
+    get_monthly_revenue_analysis,
+)
 
 
 def analyze_revenue_change(month: str):
     """
-    Analyze revenue change compared with the previous month.
+    Decompose revenue change into:
 
-    All numerical calculations are performed deterministically
-    using Python/Pandas. The LLM should only interpret the results.
+    1. Order volume effect
+    2. Average order value effect
+    3. Interaction effect
+
+    Revenue = Orders × AOV
     """
 
-    df = get_monthly_performance()
+    current = get_monthly_revenue_analysis(month)
 
-    # --------------------------------
-    # FIND CURRENT MONTH
-    # --------------------------------
+    current_revenue = current["revenue"]
+    current_orders = current["orders"]
+    current_aov = current["aov"]
 
-    current_rows = df[df["month"] == month]
+    previous_revenue = current["previous_revenue"]
+    previous_orders = current["previous_orders"]
+    previous_aov = current["previous_aov"]
 
-    if current_rows.empty:
-        raise ValueError(
-            f"Month '{month}' not found in reporting period."
-        )
+    if (
+        previous_revenue is None
+        or previous_orders is None
+        or previous_aov is None
+    ):
+        return {
+            "month": month,
+            "status": "insufficient_data",
+            "message": (
+                "Previous period data is unavailable, "
+                "so revenue driver analysis cannot be performed."
+            )
+        }
 
-    current_index = current_rows.index[0]
-
-    # First month has no comparison period
-    if current_index == df.index[0]:
-        raise ValueError(
-            f"No previous month available for {month}."
-        )
-
-    current = df.loc[current_index]
-    previous = df.loc[current_index - 1]
-
-    # --------------------------------
-    # REVENUE
-    # --------------------------------
+    # ---------------------------------------------
+    # TOTAL REVENUE CHANGE
+    # ---------------------------------------------
 
     revenue_change = (
-        current["revenue"] - previous["revenue"]
+        current_revenue - previous_revenue
     )
 
-    revenue_change_percent = (
-        revenue_change / previous["revenue"] * 100
-        if previous["revenue"] != 0
-        else 0
-    )
+    # ---------------------------------------------
+    # DRIVER DECOMPOSITION
+    #
+    # Revenue = Orders × AOV
+    #
+    # Order effect:
+    # (Current Orders - Previous Orders) × Previous AOV
+    #
+    # AOV effect:
+    # (Current AOV - Previous AOV) × Previous Orders
+    #
+    # Interaction effect:
+    # (Change in Orders) × (Change in AOV)
+    # ---------------------------------------------
 
-    # --------------------------------
-    # ORDERS
-    # --------------------------------
-
-    order_change = (
-        current["orders"] - previous["orders"]
-    )
-
-    order_change_percent = (
-        order_change / previous["orders"] * 100
-        if previous["orders"] != 0
-        else 0
-    )
-
-    # --------------------------------
-    # AOV
-    # --------------------------------
-
-    aov_change = (
-        current["aov"] - previous["aov"]
-    )
-
-    aov_change_percent = (
-        aov_change / previous["aov"] * 100
-        if previous["aov"] != 0
-        else 0
-    )
-
-    # --------------------------------
-    # DRIVER EFFECTS
-    # --------------------------------
-
-    # Effect of order volume while keeping
-    # previous AOV constant.
     order_effect = (
-        order_change * previous["aov"]
+        (current_orders - previous_orders)
+        * previous_aov
     )
 
-    # Effect of AOV while keeping
-    # current order volume constant.
     aov_effect = (
-        previous["orders"] * aov_change
+        (current_aov - previous_aov)
+        * previous_orders
     )
 
-    # Interaction effect between order volume
-    # and AOV.
     interaction_effect = (
-        order_change * aov_change
+        (current_orders - previous_orders)
+        * (current_aov - previous_aov)
     )
 
-    # --------------------------------
-    # PRIMARY DRIVER
-    # --------------------------------
+    # ---------------------------------------------
+    # RECONCILIATION CHECK
+    # ---------------------------------------------
 
-    if abs(aov_effect) > abs(order_effect):
-        primary_driver = "average_order_value"
+    reconstructed_change = (
+        order_effect
+        + aov_effect
+        + interaction_effect
+    )
+
+    reconciliation_difference = (
+        revenue_change
+        - reconstructed_change
+    )
+
+    # ---------------------------------------------
+    # DETERMINE DOMINANT DRIVER
+    # ---------------------------------------------
+
+    effects = {
+        "order_volume": order_effect,
+        "aov": aov_effect,
+        "interaction": interaction_effect,
+    }
+
+    primary_driver = max(
+        effects,
+        key=lambda key: abs(effects[key])
+    )
+
+    # ---------------------------------------------
+    # DRIVER CONTRIBUTION
+    # ---------------------------------------------
+
+    if revenue_change != 0:
+
+        order_contribution_percent = (
+            order_effect
+            / revenue_change
+            * 100
+        )
+
+        aov_contribution_percent = (
+            aov_effect
+            / revenue_change
+            * 100
+        )
+
+        interaction_contribution_percent = (
+            interaction_effect
+            / revenue_change
+            * 100
+        )
+
     else:
-        primary_driver = "order_volume"
 
-    # --------------------------------
-    # REVENUE DIRECTION
-    # --------------------------------
-
-    if revenue_change_percent > 0:
-        revenue_direction = "increase"
-    elif revenue_change_percent < 0:
-        revenue_direction = "decrease"
-    else:
-        revenue_direction = "stable"
-
-    # --------------------------------
-    # RETURN STRUCTURED ANALYSIS
-    # --------------------------------
+        order_contribution_percent = 0
+        aov_contribution_percent = 0
+        interaction_contribution_percent = 0
 
     return {
-        "period": month,
-        "previous_period": previous["month"],
+        "month": month,
 
-        # Revenue
-        "revenue": round(float(current["revenue"]), 2),
-        "previous_revenue": round(
-            float(previous["revenue"]), 2
-        ),
+        "status": "complete",
+
+        "current_period": {
+            "revenue": round(
+                current_revenue,
+                2
+            ),
+            "orders": int(
+                current_orders
+            ),
+            "aov": round(
+                current_aov,
+                2
+            ),
+        },
+
+        "previous_period": {
+            "month": current[
+                "previous_month"
+            ],
+            "revenue": round(
+                previous_revenue,
+                2
+            ),
+            "orders": int(
+                previous_orders
+            ),
+            "aov": round(
+                previous_aov,
+                2
+            ),
+        },
+
         "revenue_change": round(
-            float(revenue_change), 2
-        ),
-        "revenue_change_percent": round(
-            float(revenue_change_percent), 2
-        ),
-
-        # Orders
-        "orders": int(current["orders"]),
-        "previous_orders": int(previous["orders"]),
-        "order_change": int(order_change),
-        "order_change_percent": round(
-            float(order_change_percent), 2
-        ),
-
-        # AOV
-        "aov": round(float(current["aov"]), 2),
-        "previous_aov": round(
-            float(previous["aov"]), 2
-        ),
-        "aov_change": round(
-            float(aov_change), 2
-        ),
-        "aov_change_percent": round(
-            float(aov_change_percent), 2
-        ),
-
-        # Driver effects
-        "order_effect": round(
-            float(order_effect), 2
-        ),
-        "aov_effect": round(
-            float(aov_effect), 2
-        ),
-        "interaction_effect": round(
-            float(interaction_effect), 2
-        ),
-
-        # Delivery
-        "delivery_rate": round(
-            float(current["delivery_rate"]), 2
-        ),
-        "previous_delivery_rate": round(
-            float(previous["delivery_rate"]), 2
-        ),
-        "delivery_rate_change": round(
-            float(
-                current["delivery_rate"]
-                - previous["delivery_rate"]
-            ),
+            revenue_change,
             2
         ),
 
-        # Cancellation
-        "cancellation_rate": round(
-            float(current["cancellation_rate"]), 2
-        ),
-        "previous_cancellation_rate": round(
-            float(previous["cancellation_rate"]), 2
-        ),
-        "cancellation_rate_change": round(
-            float(
-                current["cancellation_rate"]
-                - previous["cancellation_rate"]
-            ),
-            2
-        ),
+        "drivers": {
+            "order_volume": {
+                "effect": round(
+                    order_effect,
+                    2
+                ),
+                "contribution_percent": round(
+                    order_contribution_percent,
+                    2
+                ),
+            },
 
-        # Interpretation
-        "revenue_direction": revenue_direction,
+            "aov": {
+                "effect": round(
+                    aov_effect,
+                    2
+                ),
+                "contribution_percent": round(
+                    aov_contribution_percent,
+                    2
+                ),
+            },
+
+            "interaction": {
+                "effect": round(
+                    interaction_effect,
+                    2
+                ),
+                "contribution_percent": round(
+                    interaction_contribution_percent,
+                    2
+                ),
+            },
+        },
+
         "primary_driver": primary_driver,
+
+        "reconciliation": {
+            "reconstructed_change": round(
+                reconstructed_change,
+                2
+            ),
+
+            "actual_change": round(
+                revenue_change,
+                2
+            ),
+
+            "difference": round(
+                reconciliation_difference,
+                6
+            ),
+        },
     }
