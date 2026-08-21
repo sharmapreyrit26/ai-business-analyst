@@ -32,6 +32,7 @@ jobs:
 
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
+            pip install pytest
           else
             pip install \
               fastapi \
@@ -72,6 +73,7 @@ jobs:
 
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
+            pip install pytest
           else
             pip install \
               fastapi \
