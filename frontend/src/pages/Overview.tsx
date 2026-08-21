@@ -24,27 +24,11 @@ import {
   YAxis,
 } from 'recharts'
 
-import {
-  api,
-} from '../api/profitlens'
-
-import {
-  ErrorState,
-  LoadingState,
-} from '../components/PageState'
-
-import {
-  KpiCard,
-} from '../components/KpiCard'
-
-import {
-  SectionTitle,
-} from '../components/SectionTitle'
-
-import type {
-  DashboardResponse,
-} from '../types/api'
-
+import { api } from '../api/profitlens'
+import { ErrorState, LoadingState } from '../components/PageState'
+import { KpiCard } from '../components/KpiCard'
+import { SectionTitle } from '../components/SectionTitle'
+import type { DashboardResponse } from '../types/api'
 import {
   fmtMoney,
   fmtNumber,
@@ -52,27 +36,18 @@ import {
   humanizeMetric,
 } from '../utils'
 
-
 type OverviewProps = {
   month: string
 }
 
-
 export default function Overview({
   month,
 }: OverviewProps) {
-  const [
-    data,
-    setData,
-  ] = useState<
-    DashboardResponse | null
-  >(null)
+  const [data, setData] =
+    useState<DashboardResponse | null>(null)
 
-  const [
-    error,
-    setError,
-  ] = useState('')
-
+  const [error, setError] =
+    useState('')
 
   useEffect(() => {
     let active = true
@@ -80,124 +55,58 @@ export default function Overview({
     setData(null)
     setError('')
 
-    api.dashboard(
-      month
-    )
+    api.dashboard(month)
       .then((result) => {
         if (active) {
-          setData(
-            result
-          )
+          setData(result)
         }
       })
       .catch((err) => {
-        if (!active) {
-          return
-        }
+        if (!active) return
 
-        if (
+        setError(
           err instanceof Error
-        ) {
-          setError(
-            err.message
-          )
-        } else {
-          setError(
-            'Unable to load the ProfitLens dashboard.'
-          )
-        }
+            ? err.message
+            : 'Unable to load the ProfitLens dashboard.'
+        )
       })
 
     return () => {
       active = false
     }
-
   }, [month])
 
+  const chartData = useMemo(() => {
+    if (!data) return []
 
-  const chartData =
-    useMemo(() => {
-      if (!data) {
-        return []
-      }
+    return data.monthly_revenue
+      .map((row) => ({
+        month: String(row.month || ''),
+        revenue: Number(row.revenue || 0),
+        orders: Number(row.orders || 0),
+      }))
+  }, [data])
 
-      return data.monthly_revenue
-        .filter((row) => {
-          const currentMonth =
-            String(
-              row.month || ''
-            )
+  if (error) return <ErrorState error={error} />
+  if (!data) return <LoadingState />
 
-          return (
-            currentMonth
-            && currentMonth
-              !== '2018-09'
-          )
-        })
-        .map((row) => ({
-          month: String(
-            row.month
-          ),
+  const kpi = data.kpis
 
-          revenue: Number(
-            row.revenue || 0
-          ),
-
-          orders: Number(
-            row.orders || 0
-          ),
-        }))
-
-    }, [data])
-
-
-  if (error) {
-    return (
-      <ErrorState
-        error={error}
-      />
-    )
-  }
-
-
-  if (!data) {
-    return (
-      <LoadingState />
-    )
-  }
-
-
-  const kpi =
-    data.kpis
-
-
-  const dataQuality =
-    String(
-      kpi.data_quality
-        ?.status
-        || 'available'
-    )
-
+  const dataQuality = String(
+    kpi.data_quality?.status || 'available'
+  )
 
   const revenueGrowth =
-    kpi.revenue
-      .growth_percent
-
+    kpi.revenue.growth_percent
 
   const orderGrowth =
-    kpi.orders
-      .growth_percent
-
+    kpi.orders.growth_percent
 
   const deliveryRate =
-    kpi.delivery
-      .rate_percent
-
+    kpi.delivery.rate_percent
 
   const cancellationRate =
-    kpi.cancellation
-      .rate_percent
-
+    kpi.cancellation.rate_percent
 
   const businessStatus =
     (
@@ -207,10 +116,8 @@ export default function Overview({
       ? 'Needs attention'
       : 'Healthy'
 
-
   return (
     <div className="page">
-
       <SectionTitle
         title="Business Overview"
         subtitle={
@@ -219,14 +126,11 @@ export default function Overview({
         }
       />
 
-
       <div className="overview-status-row">
-
         <div
           className={
             `overview-health ${
-              businessStatus
-                === 'Healthy'
+              businessStatus === 'Healthy'
                 ? 'healthy'
                 : 'attention'
             }`
@@ -234,267 +138,133 @@ export default function Overview({
         >
           <div className="overview-health-icon">
             {
-              businessStatus
-                === 'Healthy'
-                ? (
-                  <PackageCheck
-                    size={18}
-                  />
-                )
-                : (
-                  <AlertTriangle
-                    size={18}
-                  />
-                )
+              businessStatus === 'Healthy'
+                ? <PackageCheck size={18} />
+                : <AlertTriangle size={18} />
             }
           </div>
 
           <div>
-            <span>
-              Business status
-            </span>
-
-            <strong>
-              {businessStatus}
-            </strong>
+            <span>Business status</span>
+            <strong>{businessStatus}</strong>
           </div>
         </div>
 
-
         <div className="overview-period">
-          <span>
-            Reporting period
-          </span>
-
-          <strong>
-            {month}
-          </strong>
+          <span>Reporting period</span>
+          <strong>{month}</strong>
         </div>
 
-
         <div className="overview-period">
-          <span>
-            Data quality
-          </span>
-
+          <span>Data quality</span>
           <strong>
-            {humanizeMetric(
-              dataQuality
-            )}
+            {humanizeMetric(dataQuality)}
           </strong>
         </div>
-
       </div>
 
-
       <div className="kpi-grid">
-
         <KpiCard
           label="Revenue"
-          value={
-            fmtMoney(
-              kpi.revenue.value
-            )
-          }
-          change={
-            kpi.revenue
-              .growth_percent
-          }
+          value={fmtMoney(kpi.revenue.value)}
+          change={kpi.revenue.growth_percent}
           note="vs previous month"
-          icon={
-            <IndianRupee
-              size={17}
-            />
-          }
+          icon={<IndianRupee size={17} />}
         />
 
         <KpiCard
           label="Orders"
-          value={
-            fmtNumber(
-              kpi.orders.value
-            )
-          }
-          change={
-            kpi.orders
-              .growth_percent
-          }
+          value={fmtNumber(kpi.orders.value)}
+          change={kpi.orders.growth_percent}
           note="vs previous month"
-          icon={
-            <ShoppingCart
-              size={17}
-            />
-          }
+          icon={<ShoppingCart size={17} />}
         />
 
         <KpiCard
           label="Average Order Value"
-          value={
-            fmtMoney(
-              kpi.aov.value
-            )
-          }
-          change={
-            kpi.aov
-              .growth_percent
-          }
+          value={fmtMoney(kpi.aov.value)}
+          change={kpi.aov.growth_percent}
           note="vs previous month"
-          icon={
-            <ReceiptIndianRupee
-              size={17}
-            />
-          }
+          icon={<ReceiptIndianRupee size={17} />}
         />
 
         <KpiCard
           label="Delivery Rate"
-          value={
-            fmtPct(
-              deliveryRate
-            )
-          }
+          value={fmtPct(deliveryRate)}
           note={
             `${fmtNumber(
-              kpi.delivery
-                .delivered_orders
+              kpi.delivery.delivered_orders
             )} delivered`
           }
-          icon={
-            <PackageCheck
-              size={17}
-            />
-          }
+          icon={<PackageCheck size={17} />}
         />
-
       </div>
-
 
       <div className="overview-secondary-grid">
-
         <div className="card overview-mini-card">
-
           <div className="overview-mini-icon red">
-            <AlertTriangle
-              size={16}
-            />
+            <AlertTriangle size={16} />
           </div>
 
           <div>
-            <span>
-              Cancellation Rate
-            </span>
-
-            <strong>
-              {fmtPct(
-                cancellationRate
-              )}
-            </strong>
-
+            <span>Cancellation Rate</span>
+            <strong>{fmtPct(cancellationRate)}</strong>
             <small>
-              {
-                fmtNumber(
-                  kpi.cancellation
-                    .cancelled_orders
-                )
-              }
-              {' '}
-              cancelled orders
+              {fmtNumber(
+                kpi.cancellation.cancelled_orders
+              )} cancelled orders
             </small>
           </div>
-
         </div>
 
-
         <div className="card overview-mini-card">
-
           <div className="overview-mini-icon blue">
-            <Truck
-              size={16}
-            />
+            <Truck size={16} />
           </div>
 
           <div>
-            <span>
-              Freight Value
-            </span>
-
+            <span>Freight Value</span>
             <strong>
-              {fmtMoney(
-                kpi.freight.value
-              )}
+              {fmtMoney(kpi.freight.value)}
             </strong>
-
-            <small>
-              Total freight in period
-            </small>
+            <small>Total freight in period</small>
           </div>
-
         </div>
 
-
         <div className="card overview-mini-card">
-
           <div className="overview-mini-icon green">
-            <Boxes
-              size={16}
-            />
+            <Boxes size={16} />
           </div>
 
           <div>
-            <span>
-              Items Sold
-            </span>
-
+            <span>Items Sold</span>
             <strong>
-              {fmtNumber(
-                kpi.items.value
-              )}
+              {fmtNumber(kpi.items.value)}
             </strong>
-
-            <small>
-              Item-level volume
-            </small>
+            <small>Item-level volume</small>
           </div>
-
         </div>
-
 
         <div className="card overview-mini-card">
-
           <div className="overview-mini-icon amber">
-            <ShoppingCart
-              size={16}
-            />
+            <ShoppingCart size={16} />
           </div>
 
           <div>
-            <span>
-              Delivered Orders
-            </span>
-
+            <span>Delivered Orders</span>
             <strong>
               {fmtNumber(
-                kpi.delivery
-                  .delivered_orders
+                kpi.delivery.delivered_orders
               )}
             </strong>
-
-            <small>
-              Successfully delivered
-            </small>
+            <small>Successfully delivered</small>
           </div>
-
         </div>
-
       </div>
 
-
       <div className="two-col">
-
         <div className="card chart-card">
-
           <div className="overview-card-header">
-
             <div>
               <div className="card-title">
                 Monthly Revenue Trend
@@ -509,192 +279,109 @@ export default function Overview({
             <span className="badge blue">
               Revenue
             </span>
-
           </div>
-
 
           <ResponsiveContainer
             width="100%"
             height={320}
           >
-            <AreaChart
-              data={chartData}
-            >
-
-              <defs>
-                <linearGradient
-                  id="revenueGradient"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop
-                    offset="0%"
-                    stopColor="#3B82F6"
-                    stopOpacity={0.35}
-                  />
-
-                  <stop
-                    offset="100%"
-                    stopColor="#3B82F6"
-                    stopOpacity={0}
-                  />
-                </linearGradient>
-              </defs>
-
-
+            <AreaChart data={chartData}>
               <CartesianGrid
                 stroke="#1E3A5F"
                 vertical={false}
               />
 
-
               <XAxis
                 dataKey="month"
                 stroke="#64748B"
-                tick={{
-                  fontSize: 11,
-                }}
+                tick={{ fontSize: 11 }}
               />
-
 
               <YAxis
                 stroke="#64748B"
-                tick={{
-                  fontSize: 11,
-                }}
-                tickFormatter={(
-                  value
-                ) =>
+                tick={{ fontSize: 11 }}
+                tickFormatter={(value) =>
                   `${Math.round(
                     value / 1000
                   )}k`
                 }
               />
 
-
               <Tooltip
                 contentStyle={{
-                  background:
-                    '#162843',
-                  border:
-                    '1px solid #1E3A5F',
+                  background: '#162843',
+                  border: '1px solid #1E3A5F',
                   borderRadius: 10,
                 }}
-                formatter={(
-                  value
-                ) =>
-                  fmtMoney(
-                    Number(value)
-                  )
+                formatter={(value) =>
+                  fmtMoney(Number(value))
                 }
               />
-
 
               <Area
                 type="monotone"
                 dataKey="revenue"
                 stroke="#3B82F6"
-                fill="url(#revenueGradient)"
+                fill="#3B82F622"
                 strokeWidth={2}
               />
-
             </AreaChart>
           </ResponsiveContainer>
-
         </div>
 
-
         <div className="card">
-
           <div className="card-title">
             Management Snapshot
           </div>
 
-
           <div className="metric-list">
-
             <div>
-              <span>
-                Revenue growth
-              </span>
-
+              <span>Revenue growth</span>
               <strong
                 className={
-                  (revenueGrowth ?? 0)
-                    >= 0
+                  (revenueGrowth ?? 0) >= 0
                     ? 'positive-text'
                     : 'negative-text'
                 }
               >
-                {fmtPct(
-                  revenueGrowth
-                )}
+                {fmtPct(revenueGrowth)}
               </strong>
             </div>
 
-
             <div>
-              <span>
-                Order growth
-              </span>
-
+              <span>Order growth</span>
               <strong
                 className={
-                  (orderGrowth ?? 0)
-                    >= 0
+                  (orderGrowth ?? 0) >= 0
                     ? 'positive-text'
                     : 'negative-text'
                 }
               >
-                {fmtPct(
-                  orderGrowth
-                )}
+                {fmtPct(orderGrowth)}
               </strong>
             </div>
-
 
             <div>
-              <span>
-                Delivery rate
-              </span>
-
+              <span>Delivery rate</span>
               <strong>
-                {fmtPct(
-                  deliveryRate
-                )}
+                {fmtPct(deliveryRate)}
               </strong>
             </div>
-
 
             <div>
-              <span>
-                Cancellation rate
-              </span>
-
+              <span>Cancellation rate</span>
               <strong>
-                {fmtPct(
-                  cancellationRate
-                )}
+                {fmtPct(cancellationRate)}
               </strong>
             </div>
-
 
             <div>
-              <span>
-                Data quality
-              </span>
-
+              <span>Data quality</span>
               <strong>
-                {humanizeMetric(
-                  dataQuality
-                )}
+                {humanizeMetric(dataQuality)}
               </strong>
             </div>
-
           </div>
-
 
           <div className="notice info">
             Profit, contribution margin, CAC, ROAS,
@@ -703,11 +390,8 @@ export default function Overview({
             marketing, payment and logistics datasets
             are connected.
           </div>
-
         </div>
-
       </div>
-
     </div>
   )
 }

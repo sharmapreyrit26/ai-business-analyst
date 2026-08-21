@@ -1,25 +1,30 @@
-export const fmtNumber = (value?: number | null, digits = 0) => value == null ? '—' : value.toLocaleString('en-IN', { maximumFractionDigits: digits })
-export const fmtMoney = (value?: number | null) => {
-  if (value == null) return '—'
-  const abs = Math.abs(value)
-  if (abs >= 10_000_000) return `${value < 0 ? '-' : ''}₹${(abs / 10_000_000).toFixed(2)}Cr`
-  if (abs >= 100_000) return `${value < 0 ? '-' : ''}₹${(abs / 100_000).toFixed(2)}L`
-  if (abs >= 1_000) return `${value < 0 ? '-' : ''}₹${(abs / 1_000).toFixed(1)}K`
-  return `${value < 0 ? '-' : ''}₹${abs.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`
+export function fmtMoney(value?: number | null): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return '—'
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(value)
 }
-export const fmtPct = (value?: number | null) => value == null ? '—' : `${value.toFixed(2)}%`
-export function humanizeMetric(
-  value?: string | null
-): string {
-  if (!value) {
-    return 'Not available'
-  }
+
+export function fmtNumber(value?: number | null): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return '—'
+  return new Intl.NumberFormat('en-IN', {
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
+export function fmtPct(value?: number | null): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return '—'
+  return `${Number(value).toFixed(2)}%`
+}
+
+export function humanizeMetric(value?: string | null): string {
+  if (!value) return 'Not available'
 
   return value
     .replace(/\\_/g, '_')
     .replace(/_/g, ' ')
     .trim()
-    .replace(/\b\w/g, (char) =>
-      char.toUpperCase()
-    )
+    .replace(/\b\w/g, (char) => char.toUpperCase())
 }

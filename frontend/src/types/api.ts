@@ -4,11 +4,18 @@ export type GrowthMetric = {
   growth_percent?: number | null
 }
 
+export type ReportingPeriodsResponse = {
+  months: string[]
+  complete_months: string[]
+  partial_months: string[]
+  default_month: string | null
+}
+
 export type DashboardResponse = {
   month: string
   kpis: {
     month: string
-    data_quality: Record<string, unknown>
+    data_quality: { status?: string; is_partial_month?: boolean }
     revenue: GrowthMetric
     orders: GrowthMetric
     aov: GrowthMetric
@@ -54,7 +61,11 @@ export type BusinessAnswerResponse = {
   question: string
   month: string
   question_type: string
-  analysis_execution?: { total_steps: number; successful_steps: number; failed_steps: number } | null
+  analysis_execution?: {
+    total_steps: number
+    successful_steps: number
+    failed_steps: number
+  } | null
   ai_available: boolean
   answer: {
     answer: string

@@ -1,41 +1,32 @@
-# ProfitLens Frontend
+# ProfitLens Frontend — Upgraded Build
 
-Clean React + Vite + TypeScript frontend rebuilt from the Claude prototype's visual language, but connected to the real deterministic ProfitLens backend.
+This package preserves the upgraded UI we built during the current ProfitLens work:
 
-## Pages
+- Upgraded Overview dashboard
+- Product Analysis V2
+- Customer Analysis with data-availability states
+- Logistics Analysis with TAT/P90 views
+- Expanded Ask ProfitLens analyst workspace
+- Scenario Lab V2
+- Dynamic reporting periods
+- Partial-month handling
+- Existing FastAPI backend integration
 
-- Overview → `GET /dashboard/{month}`
-- Product Analysis → `GET /analytics/products/{month}`
-- Customer Analysis → `GET /analytics/customers`
-- Logistics → `GET /analytics/logistics/{month}`
-- Ask ProfitLens → `POST /analytics/business-question`
-- Scenario Lab → `POST /analytics/scenario`
+## Backend expected
 
-Unsupported metrics such as true profit, CAC, ROAS, RTO and contribution margin are intentionally not faked.
-
-## Codespaces local development
-
-Run the backend on port 8000:
+Run from repository root:
 
 ```bash
-uvicorn backend.app.main:app --reload
+uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Run the frontend on port 5173 from this folder:
+## Frontend
 
 ```bash
+cd frontend
 npm install
+npm run build
 npm run dev
 ```
 
-Vite proxies `/api/*` to `http://127.0.0.1:8000`, so no CORS change is needed for local Codespaces development.
-
-## Production API URL
-
-Copy `.env.example` to `.env` and set:
-
-```bash
-VITE_API_BASE_URL=https://your-backend.example.com
-```
-
-When this variable is set, the browser calls that backend directly. Configure CORS on FastAPI for the deployed frontend origin.
+Vite proxies `/api` to `http://127.0.0.1:8000`.

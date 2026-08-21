@@ -22,9 +22,6 @@ def _get_order_financials_cached():
     Build and cache the order-level financial dataset.
 
     One row represents one order.
-
-    Revenue, freight and item count are aggregated from
-    order-item level data and then joined to order metadata.
     """
 
     orders = load_orders()
@@ -159,9 +156,7 @@ def get_revenue_summary():
 
     return {
         "total_revenue": round(
-            float(
-                total_revenue
-            ),
+            float(total_revenue),
             2,
         ),
 
@@ -174,30 +169,22 @@ def get_revenue_summary():
         ),
 
         "total_freight": round(
-            float(
-                total_freight
-            ),
+            float(total_freight),
             2,
         ),
 
         "average_order_value": round(
-            float(
-                aov
-            ),
+            float(aov),
             2,
         ),
 
         "delivered_revenue": round(
-            float(
-                delivered_revenue
-            ),
+            float(delivered_revenue),
             2,
         ),
 
         "cancelled_revenue": round(
-            float(
-                cancelled_revenue
-            ),
+            float(cancelled_revenue),
             2,
         ),
 
@@ -294,6 +281,25 @@ def _get_monthly_revenue_cached():
         ]
         .pct_change()
         .mul(100)
+    )
+
+    # JSON-safe growth values for periods
+    # that do not have a previous month.
+    monthly[
+        [
+            "revenue_growth",
+            "order_growth",
+            "aov_growth",
+        ]
+    ] = (
+        monthly[
+            [
+                "revenue_growth",
+                "order_growth",
+                "aov_growth",
+            ]
+        ]
+        .fillna(0.0)
     )
 
     return monthly
@@ -594,11 +600,13 @@ def _get_monthly_data_quality_cached():
         results.append({
             "month": month,
 
-            # Required by existing KPI engine.
-            "data_quality": quality_status,
+            "data_quality": (
+                quality_status
+            ),
 
-            # Frontend/API-friendly alias.
-            "status": quality_status,
+            "status": (
+                quality_status
+            ),
 
             "is_partial_month": bool(
                 is_partial
@@ -613,15 +621,10 @@ def _get_monthly_data_quality_cached():
 def get_monthly_data_quality():
     """
     Return monthly reporting-quality information.
-
-    Fresh dictionaries are returned so callers
-    cannot mutate cached records.
     """
 
     return [
-        dict(
-            item
-        )
+        dict(item)
         for item in (
             _get_monthly_data_quality_cached()
         )
@@ -700,9 +703,13 @@ def _get_product_revenue_cached():
     product[
         "freight_to_revenue_percent"
     ] = (
-        product["freight_value"]
+        product[
+            "freight_value"
+        ]
         .div(
-            product["revenue"]
+            product[
+                "revenue"
+            ]
             .replace(
                 0,
                 pd.NA,

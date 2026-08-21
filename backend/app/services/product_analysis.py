@@ -1,98 +1,177 @@
+from functools import lru_cache
+
 import pandas as pd
+
+from backend.app.exceptions import (
+    ResourceNotFoundError,
+)
 
 from backend.app.services.data_loader import (
     load_orders,
 )
 
-
-ITEMS_PATH = (
-    "data/raw/olist_order_items_dataset.csv"
+from backend.app.services.revenue import (
+    load_order_items,
 )
 
 
-def _load_product_dataset():
-    """
-    Build the item-level product dataset by combining
-    order items with order-level information.
-    """
+# ============================================================
+# PRODUCT DATASET
+# ============================================================
 
-    items = pd.read_csv(
-        ITEMS_PATH
-    )
+
+@lru_cache(maxsize=1)
+def _get_product_dataset_cached():
+    """
+    Build the product-level source dataset used by
+    ProfitLens product analytics.
+
+    Order-item data is joined to order metadata so product
+    metrics can be filtered by the customer's purchase month.
+    """
 
     orders = load_orders()
+    items = load_order_items()
 
-    required_columns = [
+    required_order_columns = [
         "order_id",
+        "order_purchase_timestamp",
+    ]
+
+    missing_order_columns = [
+        column
+        for column in required_order_columns
+        if column not in orders.columns
+    ]
+
+    if missing_order_columns:
+        raise ValueError(
+            "Orders dataset is missing required column(s): "
+            + ", ".join(
+                missing_order_columns
+            )
+        )
+
+    required_item_columns = [
+        "order_id",
+        "order_item_id",
         "product_id",
-        "seller_id",
         "price",
         "freight_value",
     ]
 
-    missing_columns = [
+    missing_item_columns = [
         column
-        for column in required_columns
+        for column in required_item_columns
         if column not in items.columns
     ]
 
-    if missing_columns:
+    if missing_item_columns:
         raise ValueError(
-            f"Missing required item columns: "
-            f"{missing_columns}"
+            "Order-items dataset is missing required column(s): "
+            + ", ".join(
+                missing_item_columns
+            )
         )
 
-    merged = items.merge(
-        orders[
-            [
-                "order_id",
-                "order_status",
-                "order_purchase_timestamp",
-            ]
-        ],
-        on="order_id",
-        how="left",
+    product_data = (
+        items.merge(
+            orders[
+                required_order_columns
+            ],
+            on="order_id",
+            how="left",
+        )
     )
 
-    merged["month"] = (
-        merged[
+    product_data[
+        "month"
+    ] = (
+        product_data[
             "order_purchase_timestamp"
         ]
         .dt.to_period("M")
         .astype(str)
     )
 
-    return merged
+    return product_data
 
 
-def get_product_performance(
-    month: str = None,
-    delivered_only: bool = False,
+def get_product_dataset():
+    """
+    Return a safe copy of the cached product dataset.
+    """
+
+    return (
+        _get_product_dataset_cached()
+        .copy()
+    )
+
+
+# ============================================================
+# MONTH VALIDATION
+# ============================================================
+
+
+def _get_month_product_data(
+    month: str,
 ):
     """
-    Calculate product-level commercial performance.
+    Return order-item records for one reporting month.
 
-    This is revenue analysis, NOT profitability.
+    A missing reporting month is considered a missing
+    resource rather than a valid empty analytics result.
     """
 
-    df = _load_product_dataset()
+    if (
+        not isinstance(
+            month,
+            str,
+        )
+        or not month.strip()
+    ):
+        raise ValueError(
+            "Month must be provided in YYYY-MM format."
+        )
 
-    if month is not None:
-        df = df[
-            df["month"] == month
-        ].copy()
+    month = (
+        month.strip()
+    )
 
-    if delivered_only:
-        df = df[
-            df["order_status"]
-            == "delivered"
-        ].copy()
+    data = (
+        _get_product_dataset_cached()
+    )
 
-    if df.empty:
-        return []
+    month_data = (
+        data[
+            data["month"]
+            == month
+        ]
+        .copy()
+    )
+
+    if month_data.empty:
+        raise ResourceNotFoundError(
+            f"Product data not found for month: {month}"
+        )
+
+    return month_data
+
+
+# ============================================================
+# MONTHLY PRODUCT METRICS
+# ============================================================
+
+
+def _aggregate_products(
+    month_data: pd.DataFrame,
+):
+    """
+    Aggregate product commercial metrics for one month.
+    """
 
     product = (
-        df.groupby(
+        month_data.groupby(
             "product_id"
         )
         .agg(
@@ -100,18 +179,17 @@ def get_product_performance(
                 "price",
                 "sum",
             ),
+
             units_sold=(
-                "order_id",
-                "size",
+                "order_item_id",
+                "count",
             ),
+
             orders=(
                 "order_id",
                 "nunique",
             ),
-            average_selling_price=(
-                "price",
-                "mean",
-            ),
+
             freight_value=(
                 "freight_value",
                 "sum",
@@ -120,127 +198,222 @@ def get_product_performance(
         .reset_index()
     )
 
-    total_revenue = (
-        product["revenue"].sum()
-    )
-
     product[
-        "revenue_share_percent"
+        "average_selling_price"
     ] = (
         product["revenue"]
-        / total_revenue
-        * 100
-        if total_revenue
-        else 0
+        / product["units_sold"]
     )
+
+    total_revenue = (
+        product["revenue"]
+        .sum()
+    )
+
+    if total_revenue:
+
+        product[
+            "revenue_share_percent"
+        ] = (
+            product["revenue"]
+            / total_revenue
+            * 100
+        )
+
+    else:
+
+        product[
+            "revenue_share_percent"
+        ] = 0.0
 
     product[
         "freight_to_revenue_percent"
-    ] = product.apply(
-        lambda row: (
-            row["freight_value"]
-            / row["revenue"]
+    ] = (
+        product[
+            "freight_value"
+        ]
+        .div(
+            product[
+                "revenue"
+            ]
+            .replace(
+                0,
+                pd.NA,
+            )
+        )
+        .mul(100)
+        .fillna(0)
+    )
+
+    product = (
+        product.sort_values(
+            "revenue",
+            ascending=False,
+        )
+        .reset_index(
+            drop=True
+        )
+    )
+
+    return product
+
+
+# ============================================================
+# SERIALIZATION
+# ============================================================
+
+
+def _serialize_product_rows(
+    product: pd.DataFrame,
+    limit: int | None = None,
+):
+    """
+    Convert product DataFrame rows into JSON-safe dictionaries.
+    """
+
+    if limit is not None:
+
+        product = (
+            product.head(
+                limit
+            )
+        )
+
+    records = []
+
+    for _, row in product.iterrows():
+
+        records.append({
+            "product_id": str(
+                row["product_id"]
+            ),
+
+            "revenue": round(
+                float(
+                    row["revenue"]
+                ),
+                2,
+            ),
+
+            "units_sold": int(
+                row["units_sold"]
+            ),
+
+            "orders": int(
+                row["orders"]
+            ),
+
+            "average_selling_price": round(
+                float(
+                    row[
+                        "average_selling_price"
+                    ]
+                ),
+                2,
+            ),
+
+            "freight_value": round(
+                float(
+                    row[
+                        "freight_value"
+                    ]
+                ),
+                2,
+            ),
+
+            "revenue_share_percent": round(
+                float(
+                    row[
+                        "revenue_share_percent"
+                    ]
+                ),
+                2,
+            ),
+
+            "freight_to_revenue_percent": round(
+                float(
+                    row[
+                        "freight_to_revenue_percent"
+                    ]
+                ),
+                2,
+            ),
+        })
+
+    return records
+
+
+# ============================================================
+# PRODUCT CONCENTRATION
+# ============================================================
+
+
+def _calculate_concentration(
+    product: pd.DataFrame,
+    month: str,
+):
+    """
+    Calculate product revenue concentration for one month.
+    """
+
+    total_products = int(
+        len(
+            product
+        )
+    )
+
+    total_revenue = float(
+        product[
+            "revenue"
+        ]
+        .sum()
+    )
+
+    if total_revenue:
+
+        top_1_share = (
+            product
+            .head(1)[
+                "revenue"
+            ]
+            .sum()
+            / total_revenue
             * 100
         )
-        if row["revenue"]
-        else 0,
-        axis=1,
-    )
 
-    product = product.sort_values(
-        "revenue",
-        ascending=False,
-    )
-
-    numeric_columns = [
-        "revenue",
-        "average_selling_price",
-        "freight_value",
-        "revenue_share_percent",
-        "freight_to_revenue_percent",
-    ]
-
-    product[numeric_columns] = (
-        product[numeric_columns]
-        .round(2)
-    )
-
-    return product.to_dict(
-        orient="records"
-    )
-
-
-def get_top_products(
-    month: str = None,
-    limit: int = 10,
-):
-    """
-    Return the highest-revenue products.
-    """
-
-    products = (
-        get_product_performance(
-            month=month
-        )
-    )
-
-    return products[:limit]
-
-
-def get_product_concentration(
-    month: str = None,
-):
-    """
-    Measure how concentrated revenue is among
-    the highest-revenue products.
-    """
-
-    products = (
-        get_product_performance(
-            month=month
-        )
-    )
-
-    if not products:
-        return {
-            "month": month,
-            "status": "no_data",
-        }
-
-    total_revenue = sum(
-        product["revenue"]
-        for product in products
-    )
-
-    top_1_revenue = sum(
-        product["revenue"]
-        for product in products[:1]
-    )
-
-    top_5_revenue = sum(
-        product["revenue"]
-        for product in products[:5]
-    )
-
-    top_10_revenue = sum(
-        product["revenue"]
-        for product in products[:10]
-    )
-
-    def share(value):
-        return round(
-            value
+        top_5_share = (
+            product
+            .head(5)[
+                "revenue"
+            ]
+            .sum()
             / total_revenue
-            * 100,
-            2,
-        ) if total_revenue else 0
+            * 100
+        )
+
+        top_10_share = (
+            product
+            .head(10)[
+                "revenue"
+            ]
+            .sum()
+            / total_revenue
+            * 100
+        )
+
+    else:
+
+        top_1_share = 0.0
+        top_5_share = 0.0
+        top_10_share = 0.0
 
     return {
         "month": month,
+
         "status": "complete",
 
-        "total_products": len(
-            products
+        "total_products": (
+            total_products
         ),
 
         "total_revenue": round(
@@ -248,59 +421,90 @@ def get_product_concentration(
             2,
         ),
 
-        "top_1_revenue_share_percent": (
-            share(top_1_revenue)
+        "top_1_revenue_share_percent": round(
+            float(
+                top_1_share
+            ),
+            2,
         ),
 
-        "top_5_revenue_share_percent": (
-            share(top_5_revenue)
+        "top_5_revenue_share_percent": round(
+            float(
+                top_5_share
+            ),
+            2,
         ),
 
-        "top_10_revenue_share_percent": (
-            share(top_10_revenue)
+        "top_10_revenue_share_percent": round(
+            float(
+                top_10_share
+            ),
+            2,
         ),
     }
 
 
-def get_product_summary(
-    month: str = None,
+# ============================================================
+# PRODUCT SUMMARY
+# ============================================================
+
+
+def _build_product_summary(
+    month: str,
+    product: pd.DataFrame,
+    month_data: pd.DataFrame,
 ):
     """
-    Build a management-level product summary.
+    Build the summary returned by the product analytics API.
     """
 
-    products = (
-        get_product_performance(
-            month=month
+    total_products = int(
+        product[
+            "product_id"
+        ]
+        .nunique()
+    )
+
+    total_revenue = float(
+        product[
+            "revenue"
+        ]
+        .sum()
+    )
+
+    total_units = int(
+        product[
+            "units_sold"
+        ]
+        .sum()
+    )
+
+    total_orders = int(
+        month_data[
+            "order_id"
+        ]
+        .nunique()
+    )
+
+    average_revenue_per_product = (
+        total_revenue
+        / total_products
+        if total_products
+        else 0
+    )
+
+    top_products = (
+        _serialize_product_rows(
+            product,
+            limit=10,
         )
     )
 
-    if not products:
-        return {
-            "month": month,
-            "status": "no_data",
-        }
-
-    total_revenue = sum(
-        product["revenue"]
-        for product in products
-    )
-
-    total_units = sum(
-        product["units_sold"]
-        for product in products
-    )
-
-    total_orders = len(
-        {
-            row["order_id"]
-            for _, row
-            in _load_product_dataset().iterrows()
-            if (
-                month is None
-                or row["month"] == month
-            )
-        }
+    concentration = (
+        _calculate_concentration(
+            product=product,
+            month=month,
+        )
     )
 
     return {
@@ -308,37 +512,36 @@ def get_product_summary(
 
         "status": "complete",
 
-        "total_products": len(
-            products
+        "total_products": (
+            total_products
         ),
 
         "total_revenue": round(
             total_revenue,
-            2
+            2,
         ),
 
-        "total_units": int(
+        "total_units": (
             total_units
         ),
 
-        "total_orders": int(
+        "total_orders": (
             total_orders
         ),
 
         "average_revenue_per_product": round(
-            total_revenue
-            / len(products),
+            float(
+                average_revenue_per_product
+            ),
             2,
         ),
 
         "top_products": (
-            products[:10]
+            top_products
         ),
 
         "concentration": (
-            get_product_concentration(
-                month
-            )
+            concentration
         ),
 
         "profitability_status": (
@@ -352,72 +555,152 @@ def get_product_summary(
     }
 
 
+# ============================================================
+# AVAILABLE / UNAVAILABLE METRICS
+# ============================================================
+
+
+def _available_metrics():
+    """
+    Product metrics that can be measured with the
+    currently connected dataset.
+    """
+
+    return [
+        "product revenue",
+        "units sold",
+        "orders",
+        "average selling price",
+        "freight value",
+        "revenue contribution",
+        "freight-to-revenue ratio",
+        "product concentration",
+    ]
+
+
+def _unavailable_metrics():
+    """
+    Product profitability metrics that must remain unavailable
+    until the required cost datasets are connected.
+    """
+
+    return {
+        "gross_profit": {
+            "status": "insufficient_data",
+
+            "required_data": [
+                "COGS",
+            ],
+        },
+
+        "contribution_margin": {
+            "status": "insufficient_data",
+
+            "required_data": [
+                "COGS",
+                "payment fees",
+                "marketing allocation",
+                "returns cost",
+                "RTO cost",
+            ],
+        },
+
+        "product_profitability": {
+            "status": "insufficient_data",
+
+            "required_data": [
+                "COGS",
+                "discounts",
+                "variable costs",
+            ],
+        },
+    }
+
+
+# ============================================================
+# PUBLIC PRODUCT ANALYTICS
+# ============================================================
+
+
 def get_product_analytics(
-    month: str = None,
+    month: str,
 ):
     """
-    Complete V1 product analytics response.
+    Return product analytics for one reporting month.
+
+    Available analysis:
+    - product revenue
+    - units sold
+    - unique orders
+    - average selling price
+    - freight value
+    - freight burden
+    - revenue contribution
+    - product concentration
+
+    True product profitability is deliberately unavailable
+    until COGS and other variable cost data are connected.
+
+    Raises:
+        ResourceNotFoundError:
+            When the requested reporting month has no
+            product data.
     """
+
+    month_data = (
+        _get_month_product_data(
+            month
+        )
+    )
+
+    product = (
+        _aggregate_products(
+            month_data
+        )
+    )
+
+    top_products = (
+        _serialize_product_rows(
+            product,
+            limit=10,
+        )
+    )
+
+    concentration = (
+        _calculate_concentration(
+            product=product,
+            month=month,
+        )
+    )
+
+    summary = (
+        _build_product_summary(
+            month=month,
+            product=product,
+            month_data=month_data,
+        )
+    )
 
     return {
         "month": month,
 
         "summary": (
-            get_product_summary(
-                month
-            )
+            summary
         ),
 
         "top_products": (
-            get_top_products(
-                month=month,
-                limit=10,
-            )
+            top_products
         ),
 
         "concentration": (
-            get_product_concentration(
-                month
-            )
+            concentration
         ),
 
-        "available_metrics": [
-            "product revenue",
-            "units sold",
-            "orders",
-            "average selling price",
-            "freight value",
-            "revenue contribution",
-            "freight-to-revenue ratio",
-            "product concentration",
-        ],
+        "available_metrics": (
+            _available_metrics()
+        ),
 
-        "unavailable_metrics": {
-            "gross_profit": {
-                "status": "insufficient_data",
-                "required_data": [
-                    "COGS",
-                ],
-            },
-
-            "contribution_margin": {
-                "status": "insufficient_data",
-                "required_data": [
-                    "COGS",
-                    "payment fees",
-                    "marketing allocation",
-                    "returns cost",
-                    "RTO cost",
-                ],
-            },
-
-            "product_profitability": {
-                "status": "insufficient_data",
-                "required_data": [
-                    "COGS",
-                    "discounts",
-                    "variable costs",
-                ],
-            },
-        },
+        "unavailable_metrics": (
+            _unavailable_metrics()
+        ),
     }

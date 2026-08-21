@@ -1,16 +1,43 @@
-.venv/
-__pycache__/
-*.pyc
+# Environment files
 .env
 .env.*
 !.env.example
-data/raw/
-data/processed/
-node_modules/
-.next/
-.vscode/
-.DS_Store
-*.zip
+!backend/.env.example
+!frontend/.env.example
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 .pytest_cache/
+.venv/
+venv/
+
+# Frontend
 frontend/node_modules/
-frontend/dist/.env
+frontend/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build / cache
+dist/
+build/
+.cache/
+coverage/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# Local datasets
+data/raw/*.csv
