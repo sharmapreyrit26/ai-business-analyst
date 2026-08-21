@@ -8,3 +8,18 @@ export const fmtMoney = (value?: number | null) => {
   return `${value < 0 ? '-' : ''}₹${abs.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`
 }
 export const fmtPct = (value?: number | null) => value == null ? '—' : `${value.toFixed(2)}%`
+export function humanizeMetric(
+  value?: string | null
+): string {
+  if (!value) {
+    return 'Not available'
+  }
+
+  return value
+    .replace(/\\_/g, '_')
+    .replace(/_/g, ' ')
+    .trim()
+    .replace(/\b\w/g, (char) =>
+      char.toUpperCase()
+    )
+}

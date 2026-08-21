@@ -771,7 +771,8 @@ Return ONLY valid JSON:
 
         interaction = client.interactions.create(
             model="gemini-3.6-flash",
-            input=prompt
+            input=prompt,
+            timeout=5.0
         )
 
         output = (

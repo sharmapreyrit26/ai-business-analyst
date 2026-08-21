@@ -1,9 +1,10 @@
 import pandas as pd
-
+from functools import lru_cache
 from .business_data import build_business_dataset
 
 
-def get_monthly_performance():
+@lru_cache(maxsize=1)
+def _get_monthly_performance_cached():
     """Calculate monthly business performance for the primary reporting period."""
 
     df = build_business_dataset()
@@ -81,3 +82,14 @@ def get_monthly_performance():
     # presentation / serialization layer.
 
     return monthly
+
+def get_monthly_performance():
+    """
+    Return a safe copy of cached monthly
+    performance metrics.
+    """
+
+    return (
+        _get_monthly_performance_cached()
+        .copy()
+    )

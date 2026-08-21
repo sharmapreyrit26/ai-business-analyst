@@ -1,23 +1,75 @@
+from functools import lru_cache
 from backend.app.services.data_loader import load_orders
 from backend.app.services.revenue import load_order_items
 
-def get_order_financials():
+@lru_cache(maxsize=1)
+def _get_order_financials_cached():
     """
-    Create order-level financial metrics by aggregating
-    all items belonging to each order.
+    Build and cache the order-level financial dataset.
     """
 
     orders = load_orders()
+
     items = load_order_items()
 
     order_financials = (
-        items.groupby("order_id")
+        items.groupby(
+            "order_id"
+        )
         .agg(
-            revenue=("price", "sum"),
-            freight_value=("freight_value", "sum"),
-            item_count=("order_item_id", "count")
+            revenue=(
+                "price",
+                "sum",
+            ),
+            freight_value=(
+                "freight_value",
+                "sum",
+            ),
+            item_count=(
+                "order_item_id",
+                "count",
+            ),
         )
         .reset_index()
+    )
+
+    order_financials = (
+        order_financials.merge(
+            orders[
+                [
+                    "order_id",
+                    "customer_id",
+                    "order_status",
+                    "order_purchase_timestamp",
+                ]
+            ],
+            on="order_id",
+            how="left",
+        )
+    )
+
+    order_financials[
+        "month"
+    ] = (
+        order_financials[
+            "order_purchase_timestamp"
+        ]
+        .dt.to_period("M")
+        .astype(str)
+    )
+
+    return order_financials
+
+
+def get_order_financials():
+    """
+    Return a safe copy of the cached
+    order-level financial dataset.
+    """
+
+    return (
+        _get_order_financials_cached()
+        .copy()
     )
 
     order_financials = order_financials.merge(
@@ -77,52 +129,98 @@ def get_revenue_summary():
     }
 
 
-def get_monthly_revenue():
+@lru_cache(maxsize=1)
+def _get_monthly_revenue_cached():
     """
-    Calculate monthly revenue, orders, AOV and freight.
+    Calculate and cache monthly revenue metrics.
     """
 
-    df = get_order_financials()
+    df = (
+        _get_order_financials_cached()
+    )
 
     monthly = (
-        df.groupby("month")
+        df.groupby(
+            "month"
+        )
         .agg(
-            revenue=("revenue", "sum"),
-            orders=("order_id", "nunique"),
-            freight_value=("freight_value", "sum"),
-            items=("item_count", "sum")
+            revenue=(
+                "revenue",
+                "sum",
+            ),
+            orders=(
+                "order_id",
+                "nunique",
+            ),
+            freight_value=(
+                "freight_value",
+                "sum",
+            ),
+            items=(
+                "item_count",
+                "sum",
+            ),
         )
         .reset_index()
-        .sort_values("month")
+        .sort_values(
+            "month"
+        )
     )
 
-    monthly["aov"] = (
-        monthly["revenue"] /
-        monthly["orders"]
-    )
-
-    monthly["revenue_growth"] = (
+    monthly[
+        "aov"
+    ] = (
         monthly["revenue"]
+        / monthly["orders"]
+    )
+
+    monthly[
+        "revenue_growth"
+    ] = (
+        monthly[
+            "revenue"
+        ]
         .pct_change()
         .mul(100)
     )
 
-    monthly["order_growth"] = (
-        monthly["orders"]
+    monthly[
+        "order_growth"
+    ] = (
+        monthly[
+            "orders"
+        ]
         .pct_change()
         .mul(100)
     )
 
-    monthly["aov_growth"] = (
-        monthly["aov"]
+    monthly[
+        "aov_growth"
+    ] = (
+        monthly[
+            "aov"
+        ]
         .pct_change()
         .mul(100)
     )
 
-    monthly = monthly.fillna(0)
+    monthly = (
+        monthly.fillna(0)
+    )
 
     return monthly
 
+
+def get_monthly_revenue():
+    """
+    Return a safe copy of the cached
+    monthly financial dataset.
+    """
+
+    return (
+        _get_monthly_revenue_cached()
+        .copy()
+    )
 
 def get_monthly_revenue_analysis(month: str):
     """
