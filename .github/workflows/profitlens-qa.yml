@@ -1,0 +1,130 @@
+name: ProfitLens QA
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            pip install \
+              fastapi \
+              uvicorn \
+              pandas \
+              numpy \
+              pydantic \
+              httpx \
+              python-dotenv \
+              google-genai \
+              pytest
+          fi
+
+      - name: Run backend tests
+        run: |
+          python -m pytest -q
+
+
+  frontend-qa:
+    name: Frontend + Playwright QA
+    runs-on: ubuntu-latest
+
+    needs:
+      - backend-tests
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            pip install \
+              fastapi \
+              uvicorn \
+              pandas \
+              numpy \
+              pydantic \
+              httpx \
+              python-dotenv \
+              google-genai
+          fi
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: |
+          npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: frontend
+        run: |
+          npx playwright install --with-deps chromium
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm run build
+
+      - name: Run Playwright QA
+        working-directory: frontend
+        env:
+          CI: "true"
+        run: |
+          npm run qa
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 14
+
+      - name: Upload Playwright test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: frontend/test-results/
+          retention-days: 14

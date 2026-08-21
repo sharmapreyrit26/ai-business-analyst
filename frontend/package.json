@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
-    "preview": "vite preview --host 0.0.0.0"
+    "preview": "vite preview --host 0.0.0.0",
+    "qa": "playwright test",
+    "qa:headed": "playwright test --headed",
+    "qa:ui": "playwright test --ui",
+    "qa:report": "playwright show-report"
   },
   "dependencies": {
     "lucide-react": "1.33.0",
@@ -16,6 +20,7 @@
     "recharts": "3.10.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "6.1.0",
