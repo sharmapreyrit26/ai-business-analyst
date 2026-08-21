@@ -268,7 +268,8 @@ Do not include text outside the JSON.
 
         interaction = client.interactions.create(
             model="gemini-3.6-flash",
-            input=prompt
+            input=prompt,
+            timeout=15.0
         )
 
         output = interaction.output_text.strip()
