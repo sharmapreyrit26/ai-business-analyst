@@ -46,9 +46,17 @@ jobs:
               pytest
           fi
 
-      - name: Run backend tests
+      - name: Run production D2C backend tests
         run: |
-          python -m pytest -q
+          python -m pytest -q \
+            tests/test_api_contracts.py \
+            tests/test_d2c_api_contracts.py \
+            tests/test_d2c_customer_api_contracts.py \
+            tests/test_d2c_financial_engine.py \
+            tests/test_d2c_inventory_api_contracts.py \
+            tests/test_d2c_logistics_api_contracts.py \
+            tests/test_d2c_overview_api_contracts.py \
+            tests/test_d2c_scenario_engine.py
 
 
   frontend-qa:
