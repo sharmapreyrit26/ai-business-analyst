@@ -11,15 +11,12 @@ api_key = os.getenv(
     "GEMINI_API_KEY"
 )
 
-if not api_key:
-    raise RuntimeError(
-        "GEMINI_API_KEY is not set. "
-        "Please add it to your .env file."
+client = (
+    genai.Client(
+        api_key=api_key
     )
-
-
-client = genai.Client(
-    api_key=api_key
+    if api_key
+    else None
 )
 
 
@@ -852,6 +849,11 @@ Return ONLY valid JSON:
     "intent": "one_supported_intent"
 }}
 """
+
+    if client is None:
+        return _keyword_fallback(
+            question
+        )
 
     try:
 

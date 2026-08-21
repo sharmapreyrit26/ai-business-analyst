@@ -15,15 +15,12 @@ api_key = os.getenv(
     "GEMINI_API_KEY"
 )
 
-if not api_key:
-    raise RuntimeError(
-        "GEMINI_API_KEY is not set. "
-        "Please add it to your .env file."
+client = (
+    genai.Client(
+        api_key=api_key
     )
-
-
-client = genai.Client(
-    api_key=api_key
+    if api_key
+    else None
 )
 
 
@@ -539,6 +536,11 @@ Do not include any text outside the JSON.
     # ========================================================
     # GEMINI REQUEST
     # ========================================================
+
+    if client is None:
+        raise RuntimeError(
+            "AI service unavailable"
+        )
 
     try:
 
