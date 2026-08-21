@@ -74,10 +74,16 @@ export default defineConfig({
         'http://127.0.0.1:8000/health',
 
       reuseExistingServer:
-        !process.env.CI,
+        false,
 
       timeout:
         120000,
+
+      env: {
+        GEMINI_API_KEY: '',
+        CORS_ORIGINS:
+          'http://localhost:5173,http://127.0.0.1:5173',
+      },
     },
 
     {
@@ -88,7 +94,7 @@ export default defineConfig({
         'http://127.0.0.1:5173',
 
       reuseExistingServer:
-        !process.env.CI,
+        false,
 
       timeout:
         120000,
