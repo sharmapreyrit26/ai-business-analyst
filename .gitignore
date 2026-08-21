@@ -10,3 +10,7 @@ node_modules/
 .next/
 .vscode/
 .DS_Store
+*.zip
+.pytest_cache/
+frontend/node_modules/
+frontend/dist/.env
