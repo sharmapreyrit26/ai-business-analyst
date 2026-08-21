@@ -1,3 +1,4 @@
+
 import {
   useEffect,
   useState,
@@ -11,78 +12,57 @@ import {
 import { api } from './api/profitlens'
 import { Header } from './components/Header'
 import { Sidebar } from './components/Sidebar'
+
 import Analyst from './pages/Analyst'
 import Customers from './pages/Customers'
 import Logistics from './pages/Logistics'
 import Overview from './pages/Overview'
 import Products from './pages/Products'
 import Scenario from './pages/Scenario'
+import Marketing from './pages/Marketing'
+import Inventory from './pages/Inventory'
 
 export default function App() {
-  const [month, setMonth] =
-    useState('')
+  const [
+    month,
+    setMonth,
+  ] = useState('2025-11')
 
-  const [months, setMonths] =
-    useState<string[]>([])
+  const [
+    months,
+    setMonths,
+  ] = useState<string[]>([])
 
-  const [partialMonths, setPartialMonths] =
-    useState<string[]>([])
-
-  const [periodsLoading, setPeriodsLoading] =
-    useState(true)
-
-  const [backendConnected, setBackendConnected] =
-    useState(true)
-
-  const [periodsError, setPeriodsError] =
-    useState('')
+  const [
+    partialMonths,
+    setPartialMonths,
+  ] = useState<string[]>([])
 
   useEffect(() => {
-    let active = true
-
-    async function loadReportingPeriods() {
-      setPeriodsLoading(true)
-      setPeriodsError('')
-
-      try {
-        const result =
-          await api.reportingPeriods()
-
-        if (!active) return
-
-        setMonths(result.months)
-        setPartialMonths(result.partial_months)
-
-        const defaultMonth =
-          result.default_month
-          || result.complete_months[0]
-          || result.months[0]
-          || ''
-
-        setMonth(defaultMonth)
-        setBackendConnected(true)
-      } catch (error) {
-        if (!active) return
-
-        setBackendConnected(false)
-
-        setPeriodsError(
-          error instanceof Error
-            ? error.message
-            : 'Unable to load reporting periods.'
+    api.reportingPeriods()
+      .then((data) => {
+        setMonths(
+          data.months
         )
-      } finally {
-        if (active) {
-          setPeriodsLoading(false)
+
+        setPartialMonths(
+          data.partial_months
+        )
+
+        if (
+          data.default_month
+        ) {
+          setMonth(
+            data.default_month
+          )
         }
-      }
-    }
-
-    loadReportingPeriods()
-
-    return () => {
-      active = false
-    }
+      })
+      .catch((error) => {
+        console.error(
+          'Failed to load reporting periods:',
+          error
+        )
+      })
   }, [])
 
   return (
@@ -95,78 +75,95 @@ export default function App() {
           months={months}
           partialMonths={partialMonths}
           onMonthChange={setMonth}
-          periodsLoading={periodsLoading}
-          backendConnected={backendConnected}
         />
 
         <div className="content">
-          {
-            periodsError
-            && (
-              <div className="notice error">
-                {periodsError}
-              </div>
-            )
-          }
-
-          {
-            periodsLoading
-            && (
-              <div className="notice info">
-                Loading reporting periods…
-              </div>
-            )
-          }
-
-          {
-            !periodsLoading
-            && month
-            && (
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    <Overview month={month} />
-                  }
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <Overview
+                  month={month}
                 />
+              }
+            />
 
-                <Route
-                  path="/products"
-                  element={
-                    <Products month={month} />
-                  }
+            <Route
+              path="/products"
+              element={
+                <Products
+                  month={month}
                 />
+              }
+            />
+             
+            <Route
+              path="/inventory"
+              element={
+                <Inventory />
+              }
+            />
+            <Route
+              path="/analyst"
+              element={
+                <Analyst
+                  month={month}
+                />
+              }
+            />
 
-                <Route
-                  path="/customers"
-                  element={
-                    <Customers month={month} />
-                  }
+            <Route
+              path="/marketing"
+              element={
+                <Marketing
+                  month={month}
                 />
+              }
+            />
 
-                <Route
-                  path="/logistics"
-                  element={
-                    <Logistics month={month} />
-                  }
-                />
+            <Route
+              path="/customers"
+              element={
+                <Customers month={month} />
+              }
+            />
 
-                <Route
-                  path="/analyst"
-                  element={
-                    <Analyst month={month} />
-                  }
+            <Route
+              path="/logistics"
+              element={
+                <Logistics
+                  month={month}
                 />
+              }
+            />
 
-                <Route
-                  path="/scenario"
-                  element={
-                    <Scenario month={month} />
-                  }
+            <Route
+              path="/analyst"
+              element={
+                <Analyst
+                  month={month}
                 />
-              </Routes>
-            )
-          }
+              }
+            />
+
+            <Route
+              path="/customers"
+              element={
+                <Customers
+                  month={month}
+                />
+              }
+            />
+
+            <Route
+              path="/scenario"
+              element={
+                <Scenario
+                  month={month}
+                />
+              }
+            />
+          </Routes>
         </div>
       </main>
     </div>

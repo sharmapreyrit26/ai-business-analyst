@@ -104,7 +104,7 @@ class BusinessAnswer(BaseModel):
 class BusinessQuestionRequest(BaseModel):
     question: str
 
-    month: str = "2018-06"
+    month: str = "2025-11"
 
 
 class BusinessQuestionResponse(BaseModel):
@@ -250,7 +250,7 @@ class LogisticsAnalyticsResponse(BaseModel):
 class ScenarioRequest(BaseModel):
     question: str
 
-    month: str = "2018-06"
+    month: str = "2025-11"
 
 
 class ScenarioResponse(BaseModel):
@@ -283,7 +283,7 @@ class ScenarioResponse(BaseModel):
 class AnalysisPlanRequest(BaseModel):
     question: str
 
-    month: str = "2018-06"
+    month: str = "2025-11"
 
 
 class AnalysisPlanResponse(BaseModel):

@@ -1,401 +1,853 @@
 import {
   useEffect,
-  useMemo,
   useState,
 } from 'react'
 
 import {
   AlertTriangle,
-  CheckCircle2,
-  Clock3,
-  PackageCheck,
-  Timer,
+  RotateCcw,
   Truck,
+  WalletCards,
 } from 'lucide-react'
 
 import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
+  api,
+} from '../api/profitlens'
 
-import { api } from '../api/profitlens'
-import { ErrorState, LoadingState } from '../components/PageState'
-import { SectionTitle } from '../components/SectionTitle'
-import type { LogisticsAnalyticsResponse } from '../types/api'
-import {
-  fmtNumber,
-  fmtPct,
-} from '../utils'
+import type {
+  D2CCourierRow,
+  D2CLogisticsSummaryResponse,
+  D2CPaymentLogisticsRow,
+  D2CZoneRow,
+} from '../types/api'
+
 
 type LogisticsProps = {
   month: string
 }
 
+
+function formatNumber(
+  value: number
+) {
+  return new Intl.NumberFormat(
+    'en-IN'
+  ).format(value)
+}
+
+
+function formatCurrency(
+  value: number
+) {
+  return new Intl.NumberFormat(
+    'en-IN',
+    {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }
+  ).format(value)
+}
+
+
 export default function Logistics({
   month,
 }: LogisticsProps) {
-  const [data, setData] =
-    useState<LogisticsAnalyticsResponse | null>(null)
+  const [
+    summaryData,
+    setSummaryData,
+  ] = useState<D2CLogisticsSummaryResponse | null>(
+    null
+  )
 
-  const [error, setError] =
-    useState('')
+  const [
+    couriers,
+    setCouriers,
+  ] = useState<D2CCourierRow[]>(
+    []
+  )
 
-  useEffect(() => {
-    let active = true
+  const [
+    paymentGroups,
+    setPaymentGroups,
+  ] = useState<D2CPaymentLogisticsRow[]>(
+    []
+  )
 
-    setData(null)
-    setError('')
+  const [
+    zones,
+    setZones,
+  ] = useState<D2CZoneRow[]>(
+    []
+  )
 
-    api.logistics(month)
-      .then((result) => {
-        if (active) {
-          setData(result)
-        }
-      })
-      .catch((err) => {
-        if (!active) return
+  const [
+    loading,
+    setLoading,
+  ] = useState(true)
 
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Unable to load logistics analytics.'
+  const [
+    error,
+    setError,
+  ] = useState<string | null>(
+    null
+  )
+
+
+  useEffect(
+    () => {
+      let cancelled = false
+
+      setLoading(true)
+      setError(null)
+
+      Promise.all([
+        api.logistics(month),
+        api.couriers(month),
+        api.paymentLogistics(month),
+        api.zones(month),
+      ])
+        .then(
+          ([
+            logisticsResponse,
+            courierResponse,
+            paymentResponse,
+            zoneResponse,
+          ]) => {
+            if (cancelled) {
+              return
+            }
+
+            setSummaryData(
+              logisticsResponse
+            )
+
+            setCouriers(
+              courierResponse.data
+            )
+
+            setPaymentGroups(
+              paymentResponse.data
+            )
+
+            setZones(
+              zoneResponse.data
+            )
+          }
         )
-      })
+        .catch(
+          (
+            requestError
+          ) => {
+            if (cancelled) {
+              return
+            }
 
-    return () => {
-      active = false
-    }
-  }, [month])
+            setSummaryData(null)
+            setCouriers([])
+            setPaymentGroups([])
+            setZones([])
 
-  const tatChartData =
-    useMemo(() => {
-      if (!data) return []
+            setError(
+              requestError
+                instanceof Error
+                ? requestError.message
+                : 'Could not load logistics analytics.'
+            )
+          }
+        )
+        .finally(
+          () => {
+            if (!cancelled) {
+              setLoading(false)
+            }
+          }
+        )
 
-      const fulfilment =
-        data.fulfilment_tat || {}
+      return () => {
+        cancelled = true
+      }
+    },
+    [
+      month,
+    ]
+  )
 
-      const stages = [
-        {
-          name: 'Purchase → Approval',
-          data: fulfilment.purchase_to_approval,
-        },
-        {
-          name: 'Approval → Carrier',
-          data: fulfilment.approval_to_carrier,
-        },
-        {
-          name: 'Carrier → Delivery',
-          data: fulfilment.carrier_to_delivery,
-        },
-        {
-          name: 'Purchase → Delivery',
-          data: fulfilment.purchase_to_delivery,
-        },
-      ]
 
-      return stages
-        .filter((stage) => stage.data)
-        .map((stage) => ({
-          name: stage.name,
-          average: Number(
-            stage.data?.average || 0
-          ),
-          p90: Number(
-            stage.data?.p90 || 0
-          ),
-        }))
-    }, [data])
+  if (loading) {
+    return (
+      <div className="page">
+        <div className="card">
+          Loading logistics analytics...
+        </div>
+      </div>
+    )
+  }
 
-  if (error) return <ErrorState error={error} />
-  if (!data) return <LoadingState />
 
-  const fulfilment =
-    data.fulfilment_tat || {}
+  if (
+    error
+    || !summaryData
+  ) {
+    return (
+      <div className="page">
+        <div className="card error-card">
+          <AlertTriangle size={20} />
 
-  const purchaseToDelivery =
-    fulfilment.purchase_to_delivery || {}
+          <div>
+            <strong>
+              Could not load logistics
+            </strong>
 
-  const approvalToCarrier =
-    fulfilment.approval_to_carrier || {}
+            <p>
+              {
+                error
+                || 'Unknown error'
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-  const carrierToDelivery =
-    fulfilment.carrier_to_delivery || {}
 
-  const deliveryPromise =
-    data.delivery_promise || {}
+  const {
+    summary,
+  } = summaryData
 
-  const orderStatus =
-    data.order_status || {}
-
-  const dataQuality =
-    data.data_quality || {}
-
-  const avgDelivery =
-    purchaseToDelivery.average
-
-  const p90Delivery =
-    purchaseToDelivery.p90
-
-  const onTime =
-    deliveryPromise.on_time_delivery_percent
-
-  const late =
-    deliveryPromise.late_delivery_percent
 
   return (
     <div className="page">
-      <SectionTitle
-        title="Logistics Analysis"
-        subtitle={
-          `Fulfilment and delivery performance for ${month}. `
-          + 'All TAT and SLA metrics are calculated from order timestamps.'
-        }
-      />
 
-      <div className="logistics-kpi-grid">
-        <div className="card logistics-kpi">
-          <div className="logistics-kpi-icon blue">
-            <Clock3 size={18} />
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">
+            Logistics analytics
           </div>
 
-          <div>
-            <span>Avg Delivery TAT</span>
-            <strong>
-              {
-                avgDelivery !== undefined
-                && avgDelivery !== null
-                  ? `${avgDelivery.toFixed(2)} days`
-                  : 'N/A'
-              }
-            </strong>
-            <small>Purchase to customer delivery</small>
-          </div>
-        </div>
+          <h2>
+            Logistics Performance
+          </h2>
 
-        <div className="card logistics-kpi">
-          <div className="logistics-kpi-icon purple">
-            <Timer size={18} />
-          </div>
-
-          <div>
-            <span>P90 Delivery TAT</span>
-            <strong>
-              {
-                p90Delivery !== undefined
-                && p90Delivery !== null
-                  ? `${p90Delivery.toFixed(2)} days`
-                  : 'N/A'
-              }
-            </strong>
-            <small>90% of orders delivered within this TAT</small>
-          </div>
-        </div>
-
-        <div className="card logistics-kpi">
-          <div className="logistics-kpi-icon green">
-            <CheckCircle2 size={18} />
-          </div>
-
-          <div>
-            <span>On-Time Delivery</span>
-            <strong>{fmtPct(onTime)}</strong>
-            <small>Delivered within promised date</small>
-          </div>
-        </div>
-
-        <div className="card logistics-kpi">
-          <div className="logistics-kpi-icon red">
-            <AlertTriangle size={18} />
-          </div>
-
-          <div>
-            <span>Late Delivery</span>
-            <strong>{fmtPct(late)}</strong>
-            <small>Delivered after promised date</small>
-          </div>
+          <p>
+            Delivery, RTO, NDR, courier
+            and zone performance for {month}.
+          </p>
         </div>
       </div>
 
-      <div className="two-col">
-        <div className="card chart-card">
-          <div className="logistics-card-header">
+
+      <div className="metric-grid">
+
+        <div className="card metric-card">
+          <div className="metric-card-top">
             <div>
-              <div className="card-title">
-                Fulfilment TAT Breakdown
+              <div className="metric-label">
+                Total Orders
               </div>
-              <p>
-                Average versus P90 turnaround time
-                across major fulfilment stages.
-              </p>
+
+              <div className="metric-value">
+                {
+                  formatNumber(
+                    summary.total_orders
+                  )
+                }
+              </div>
             </div>
 
-            <span className="badge blue">
-              Days
-            </span>
+            <div className="metric-icon">
+              <Truck size={20} />
+            </div>
           </div>
-
-          <ResponsiveContainer width="100%" height={340}>
-            <BarChart
-              data={tatChartData}
-              layout="vertical"
-            >
-              <CartesianGrid
-                stroke="#1E3A5F"
-                horizontal={false}
-              />
-
-              <XAxis
-                type="number"
-                stroke="#64748B"
-                tick={{ fontSize: 11 }}
-              />
-
-              <YAxis
-                type="category"
-                dataKey="name"
-                stroke="#64748B"
-                width={135}
-                tick={{ fontSize: 10 }}
-              />
-
-              <Tooltip
-                contentStyle={{
-                  background: '#162843',
-                  border: '1px solid #1E3A5F',
-                  borderRadius: 10,
-                }}
-                formatter={(value) =>
-                  `${Number(value).toFixed(2)} days`
-                }
-              />
-
-              <Bar
-                dataKey="average"
-                fill="#3B82F6"
-                radius={[0, 5, 5, 0]}
-              />
-
-              <Bar
-                dataKey="p90"
-                fill="#8B5CF6"
-                radius={[0, 5, 5, 0]}
-              />
-            </BarChart>
-          </ResponsiveContainer>
         </div>
 
-        <div className="card">
-          <div className="card-title">
-            Fulfilment Snapshot
-          </div>
 
-          <div className="metric-list">
+        <div className="card metric-card">
+          <div className="metric-card-top">
             <div>
-              <span>Approval → Carrier Avg</span>
-              <strong>
+              <div className="metric-label">
+                Delivery Rate
+              </div>
+
+              <div className="metric-value">
                 {
-                  approvalToCarrier.average !== undefined
-                  && approvalToCarrier.average !== null
-                    ? `${approvalToCarrier.average.toFixed(2)} days`
-                    : 'N/A'
-                }
-              </strong>
+                  summary
+                    .delivery_rate_percent
+                    .toFixed(2)
+                }%
+              </div>
             </div>
+          </div>
 
+          <div className="metric-subtitle">
+            {
+              formatNumber(
+                summary.delivered_orders
+              )
+            } orders with delivery timestamp
+          </div>
+        </div>
+
+
+        <div className="card metric-card">
+          <div className="metric-card-top">
             <div>
-              <span>Carrier → Delivery Avg</span>
-              <strong>
+              <div className="metric-label">
+                RTO Rate
+              </div>
+
+              <div className="metric-value">
                 {
-                  carrierToDelivery.average !== undefined
-                  && carrierToDelivery.average !== null
-                    ? `${carrierToDelivery.average.toFixed(2)} days`
-                    : 'N/A'
-                }
-              </strong>
+                  summary
+                    .rto_rate_percent
+                    .toFixed(2)
+                }%
+              </div>
             </div>
 
-            <div>
-              <span>Delivered Orders</span>
-              <strong>
-                {fmtNumber(
-                  orderStatus.delivered_orders
-                )}
-              </strong>
-            </div>
-
-            <div>
-              <span>Cancelled Orders</span>
-              <strong>
-                {fmtNumber(
-                  orderStatus.cancelled_orders
-                )}
-              </strong>
-            </div>
-
-            <div>
-              <span>Data Quality</span>
-              <strong>
-                {String(
-                  dataQuality.status || 'available'
-                )}
-              </strong>
+            <div className="metric-icon">
+              <RotateCcw size={20} />
             </div>
           </div>
 
-          <div className="notice info">
-            This view separates average TAT from P90.
-            P90 is usually more useful operationally because
-            it highlights the slower tail of fulfilment
-            performance.
+          <div className="metric-subtitle">
+            {
+              formatNumber(
+                summary.rto_orders
+              )
+            } RTO orders
           </div>
+        </div>
+
+
+        <div className="card metric-card">
+          <div className="metric-card-top">
+            <div>
+              <div className="metric-label">
+                NDR Rate
+              </div>
+
+              <div className="metric-value">
+                {
+                  summary
+                    .ndr_rate_percent
+                    .toFixed(2)
+                }%
+              </div>
+            </div>
+
+            <div className="metric-icon">
+              <AlertTriangle size={20} />
+            </div>
+          </div>
+
+          <div className="metric-subtitle">
+            {
+              formatNumber(
+                summary.ndr_orders
+              )
+            } NDR orders
+          </div>
+        </div>
+
+
+        <div className="card metric-card">
+          <div className="metric-label">
+            On-Time Delivery
+          </div>
+
+          <div className="metric-value">
+            {
+              summary
+                .on_time_delivery_percent
+                .toFixed(2)
+            }%
+          </div>
+
+          <div className="metric-subtitle">
+            {
+              formatNumber(
+                summary.on_time_orders
+              )
+            } on-time / {
+              formatNumber(
+                summary.promise_measured_orders
+              )
+            } measurable
+          </div>
+        </div>
+
+
+        <div className="card metric-card">
+          <div className="metric-label">
+            COD Share
+          </div>
+
+          <div className="metric-value">
+            {
+              summary
+                .cod_share_percent
+                .toFixed(2)
+            }%
+          </div>
+
+          <div className="metric-subtitle">
+            {
+              formatNumber(
+                summary.cod_orders
+              )
+            } COD orders
+          </div>
+
+          <WalletCards size={18} />
+        </div>
+
+      </div>
+
+
+      <div className="section-heading">
+        <div>
+          <h2>
+            Delivery TAT
+          </h2>
+
+          <p>
+            Fulfilment speed and tail performance.
+          </p>
         </div>
       </div>
+
+
+      <div className="metric-grid">
+
+        <div className="card metric-card">
+          <div className="metric-label">
+            Average Delivery TAT
+          </div>
+
+          <div className="metric-value">
+            {
+              summary
+                .average_delivery_tat_days
+                .toFixed(2)
+            } days
+          </div>
+        </div>
+
+
+        <div className="card metric-card">
+          <div className="metric-label">
+            Median Delivery TAT
+          </div>
+
+          <div className="metric-value">
+            {
+              summary
+                .median_delivery_tat_days
+                .toFixed(2)
+            } days
+          </div>
+        </div>
+
+
+        <div className="card metric-card">
+          <div className="metric-label">
+            P90 Delivery TAT
+          </div>
+
+          <div className="metric-value">
+            {
+              summary
+                .p90_delivery_tat_days
+                .toFixed(2)
+            } days
+          </div>
+        </div>
+
+
+        <div className="card metric-card">
+          <div className="metric-label">
+            Average First Attempt
+          </div>
+
+          <div className="metric-value">
+            {
+              summary
+                .average_first_attempt_tat_days
+                .toFixed(2)
+            } days
+          </div>
+        </div>
+
+
+        <div className="card metric-card">
+          <div className="metric-label">
+            P90 First Attempt
+          </div>
+
+          <div className="metric-value">
+            {
+              summary
+                .p90_first_attempt_tat_days
+                .toFixed(2)
+            } days
+          </div>
+        </div>
+
+      </div>
+
+
+      <div className="section-heading">
+        <div>
+          <h2>
+            Courier Performance
+          </h2>
+
+          <p>
+            Compare courier delivery speed,
+            RTO, NDR and commercial rates.
+          </p>
+        </div>
+      </div>
+
 
       <div className="card">
-        <div className="logistics-card-header">
-          <div>
-            <div className="card-title">
-              Delivery Promise Performance
-            </div>
-            <p>
-              Comparison of orders delivered within
-              versus after the promised customer date.
-            </p>
-          </div>
+        <div className="table-wrap">
+          <table className="data-table">
 
-          <Truck size={18} />
-        </div>
+            <thead>
+              <tr>
+                <th>Courier</th>
+                <th>Orders</th>
+                <th>Delivery Rate</th>
+                <th>RTO</th>
+                <th>NDR</th>
+                <th>Avg TAT</th>
+                <th>P90 TAT</th>
+                <th>On-Time</th>
+                <th>Base Cost</th>
+                <th>RTO Fee</th>
+              </tr>
+            </thead>
 
-        <div className="delivery-promise-grid">
-          <div className="delivery-promise-item good">
-            <PackageCheck size={18} />
-            <div>
-              <span>On Time</span>
-              <strong>{fmtPct(onTime)}</strong>
-            </div>
-          </div>
+            <tbody>
+              {
+                couriers.map(
+                  (
+                    row
+                  ) => (
+                    <tr
+                      key={
+                        row.courier_name
+                      }
+                    >
+                      <td>
+                        <strong>
+                          {
+                            row.courier_name
+                          }
+                        </strong>
+                      </td>
 
-          <div className="delivery-promise-item bad">
-            <AlertTriangle size={18} />
-            <div>
-              <span>Late</span>
-              <strong>{fmtPct(late)}</strong>
-            </div>
-          </div>
+                      <td>
+                        {
+                          formatNumber(
+                            row.orders
+                          )
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .delivery_rate_percent
+                            .toFixed(2)
+                        }%
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .rto_rate_percent
+                            .toFixed(2)
+                        }%
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .ndr_rate_percent
+                            .toFixed(2)
+                        }%
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .average_delivery_tat_days
+                            .toFixed(2)
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .p90_delivery_tat_days
+                            .toFixed(2)
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .on_time_delivery_percent
+                            .toFixed(2)
+                        }%
+                      </td>
+
+                      <td>
+                        {
+                          formatCurrency(
+                            row.base_shipping_cost
+                          )
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          formatCurrency(
+                            row.rto_fee
+                          )
+                        }
+                      </td>
+                    </tr>
+                  )
+                )
+              }
+            </tbody>
+
+          </table>
         </div>
       </div>
 
-      <div className="notice warning">
-        Courier-level performance, RTO, NDR and COD vs
-        prepaid analysis are intentionally unavailable
-        until courier, return-status and payment-method
-        data are connected.
+
+      <div className="section-heading">
+        <div>
+          <h2>
+            COD vs Prepaid
+          </h2>
+
+          <p>
+            Operational quality by payment type.
+          </p>
+        </div>
       </div>
+
+
+      <div className="card">
+        <div className="table-wrap">
+          <table className="data-table">
+
+            <thead>
+              <tr>
+                <th>Payment</th>
+                <th>Orders</th>
+                <th>RTO</th>
+                <th>NDR</th>
+                <th>Returns</th>
+                <th>Avg TAT</th>
+                <th>P90 TAT</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {
+                paymentGroups.map(
+                  (
+                    row
+                  ) => (
+                    <tr
+                      key={
+                        row.payment_group
+                      }
+                    >
+                      <td>
+                        <strong>
+                          {
+                            row.payment_group
+                          }
+                        </strong>
+                      </td>
+
+                      <td>
+                        {
+                          formatNumber(
+                            row.orders
+                          )
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .rto_rate_percent
+                            .toFixed(2)
+                        }%
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .ndr_rate_percent
+                            .toFixed(2)
+                        }%
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .return_rate_percent
+                            .toFixed(2)
+                        }%
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .average_delivery_tat_days
+                            .toFixed(2)
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .p90_delivery_tat_days
+                            .toFixed(2)
+                        }
+                      </td>
+                    </tr>
+                  )
+                )
+              }
+            </tbody>
+
+          </table>
+        </div>
+      </div>
+
+
+      <div className="section-heading">
+        <div>
+          <h2>
+            Zone Risk
+          </h2>
+
+          <p>
+            Delivery risk and speed by shipping zone.
+          </p>
+        </div>
+      </div>
+
+
+      <div className="card">
+        <div className="table-wrap">
+          <table className="data-table">
+
+            <thead>
+              <tr>
+                <th>Zone</th>
+                <th>Orders</th>
+                <th>RTO</th>
+                <th>NDR</th>
+                <th>Avg TAT</th>
+                <th>P90 TAT</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {
+                zones.map(
+                  (
+                    row
+                  ) => (
+                    <tr
+                      key={
+                        row.zone
+                      }
+                    >
+                      <td>
+                        <strong>
+                          {
+                            row.zone
+                          }
+                        </strong>
+                      </td>
+
+                      <td>
+                        {
+                          formatNumber(
+                            row.orders
+                          )
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .rto_rate_percent
+                            .toFixed(2)
+                        }%
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .ndr_rate_percent
+                            .toFixed(2)
+                        }%
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .average_delivery_tat_days
+                            .toFixed(2)
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .p90_delivery_tat_days
+                            .toFixed(2)
+                        }
+                      </td>
+                    </tr>
+                  )
+                )
+              }
+            </tbody>
+
+          </table>
+        </div>
+      </div>
+
+
+      <div className="card limitation-card">
+        <strong>
+          Logistics metric scope
+        </strong>
+
+        <p>
+          Delivery rate represents orders with a recorded
+          customer-delivery timestamp. On-time delivery is
+          calculated only where both delivery and promised
+          delivery dates are measurable.
+        </p>
+      </div>
+
     </div>
   )
 }

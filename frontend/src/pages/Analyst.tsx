@@ -1,401 +1,639 @@
 import {
   FormEvent,
+  useEffect,
+  useMemo,
   useState,
 } from 'react'
 
 import {
-  BrainCircuit,
+  AlertTriangle,
+  Bot,
   CheckCircle2,
-  Clock3,
-  Lightbulb,
-  Send,
+  Loader2,
+  MessageSquareText,
   Sparkles,
 } from 'lucide-react'
 
-import { api } from '../api/profitlens'
-import { SectionTitle } from '../components/SectionTitle'
-import type { BusinessAnswerResponse } from '../types/api'
-import { humanizeMetric } from '../utils'
+import {
+  api,
+} from '../api/profitlens'
 
-const suggestions = [
-  'Why did revenue decline?',
-  'Which products generated the most revenue?',
-  'What is our P90 delivery TAT?',
-  'What should management focus on?',
-  'Why did revenue fall even though delivery improved?',
-  'What is our cancellation rate?',
-]
+import type {
+  BusinessAnswerResponse,
+} from '../types/api'
+
 
 type AnalystProps = {
   month: string
 }
 
+
+const EXAMPLE_QUESTIONS = [
+  'Why did revenue decline?',
+  'Are we profitable after marketing?',
+  'Is our marketing efficient?',
+  'Why is RTO high?',
+  'Which courier should we be concerned about?',
+  'Which products generated the most revenue?',
+  'What is our repeat customer rate?',
+  'Which inventory problems require immediate action?',
+  'What are the three biggest problems in the business?',
+  'What should management focus on next?',
+]
+
+
 export default function Analyst({
   month,
 }: AnalystProps) {
-  const [question, setQuestion] =
-    useState('Why did revenue decline?')
+  const [
+    question,
+    setQuestion,
+  ] = useState(
+    'What should management focus on next?'
+  )
 
-  const [data, setData] =
-    useState<BusinessAnswerResponse | null>(null)
+  const [
+    result,
+    setResult,
+  ] = useState<BusinessAnswerResponse | null>(
+    null
+  )
 
-  const [loading, setLoading] =
-    useState(false)
+  const [
+    loading,
+    setLoading,
+  ] = useState(false)
 
-  const [error, setError] =
-    useState('')
+  const [
+    error,
+    setError,
+  ] = useState<string | null>(
+    null
+  )
 
-  async function submit(
-    event?: FormEvent
+
+  useEffect(
+    () => {
+      setResult(null)
+      setError(null)
+    },
+    [
+      month,
+    ]
+  )
+
+
+  const canSubmit =
+    useMemo(
+      () =>
+        question.trim().length > 0
+        && !loading,
+      [
+        question,
+        loading,
+      ]
+    )
+
+
+  async function askQuestion(
+    submittedQuestion?: string,
   ) {
-    event?.preventDefault()
+    const finalQuestion =
+      (
+        submittedQuestion
+        ?? question
+      ).trim()
 
-    const trimmed =
-      question.trim()
+    if (!finalQuestion) {
+      return
+    }
 
-    if (!trimmed) return
+    setQuestion(
+      finalQuestion
+    )
 
     setLoading(true)
-    setError('')
+    setError(null)
 
     try {
-      const result =
+      const response =
         await api.ask(
-          trimmed,
-          month
+          finalQuestion,
+          month,
         )
 
-      setData(result)
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Unable to analyze the question.'
+      setResult(
+        response
       )
+
+    } catch (
+      requestError
+    ) {
+      setResult(null)
+
+      setError(
+        requestError
+          instanceof Error
+          ? requestError.message
+          : 'Could not ask ProfitLens.'
+      )
+
     } finally {
       setLoading(false)
     }
   }
 
-  function chooseSuggestion(
-    value: string
+
+  function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
   ) {
-    setQuestion(value)
-    setError('')
+    event.preventDefault()
+
+    void askQuestion()
   }
+
 
   return (
     <div className="page">
-      <SectionTitle
-        title="Ask ProfitLens"
-        subtitle={
-          `AI-assisted business analysis for ${month}. `
-          + 'ProfitLens calculates the business facts first, then uses AI only to explain them.'
-        }
-      />
 
-      <div className="analyst-workspace">
-        <div className="analyst-left">
-          <div className="card analyst-ask-card">
-            <div className="analyst-ask-header">
-              <div>
-                <div className="card-title">
-                  Ask a Business Question
-                </div>
-                <p>
-                  Ask about revenue, orders, products,
-                  customers, logistics or business health.
-                </p>
-              </div>
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">
+            AI business analyst
+          </div>
 
-              <BrainCircuit size={20} />
-            </div>
+          <h2>
+            Ask ProfitLens
+          </h2>
 
-            <form
-              onSubmit={submit}
-              className="ask-form analyst-form-v2"
-            >
-              <textarea
-                value={question}
-                onChange={(event) =>
+          <p>
+            Ask business questions for {month}.
+            ProfitLens calculates metrics deterministically
+            and uses AI only to interpret the results.
+          </p>
+        </div>
+      </div>
+
+
+      <div className="card">
+
+        <form
+          onSubmit={
+            handleSubmit
+          }
+        >
+          <div className="analyst-input-wrap">
+
+            <MessageSquareText
+              size={20}
+            />
+
+            <textarea
+              value={
+                question
+              }
+              onChange={
+                (
+                  event
+                ) =>
                   setQuestion(
                     event.target.value
                   )
-                }
-                placeholder="Example: Why did revenue decline?"
-                disabled={loading}
-              />
+              }
+              placeholder="Ask a business question..."
+              rows={4}
+              disabled={
+                loading
+              }
+            />
 
-              <button
-                type="submit"
-                className="primary-btn"
-                disabled={
-                  loading
-                  || !question.trim()
-                }
-              >
-                {
-                  loading
-                    ? (
-                      <>
-                        <Sparkles
-                          size={15}
-                          className="spin"
-                        />
-                        Analyzing…
-                      </>
-                    )
-                    : (
-                      <>
-                        <Send size={15} />
-                        Analyze
-                      </>
-                    )
-                }
-              </button>
-            </form>
-
-            <div className="analyst-suggestions">
-              <span>Suggested questions</span>
-
-              <div>
-                {suggestions.map(
-                  (suggestion) => (
-                    <button
-                      type="button"
-                      key={suggestion}
-                      onClick={() =>
-                        chooseSuggestion(
-                          suggestion
-                        )
-                      }
-                      disabled={loading}
-                    >
-                      {suggestion}
-                    </button>
-                  )
-                )}
-              </div>
-            </div>
           </div>
 
-          {
-            error
-            && (
-              <div className="notice error">
-                {error}
-              </div>
-            )
-          }
 
-          {
-            data
-            && (
-              <div className="card analyst-answer-card">
-                <div className="analyst-answer-header">
-                  <div>
-                    <span className="analyst-label">
-                      ProfitLens conclusion
-                    </span>
+          <div className="analyst-submit-row">
 
-                    <h2>
-                      {data.answer.answer}
-                    </h2>
-                  </div>
-
-                  <CheckCircle2 size={22} />
-                </div>
-
-                <div className="analyst-meta-row">
-                  <span className="badge blue">
-                    {humanizeMetric(
-                      data.question_type
-                    )}
-                  </span>
-
-                  <span
-                    className={
-                      `badge ${
-                        data.ai_available
-                          ? 'green'
-                          : 'amber'
-                      }`
-                    }
-                  >
-                    {
-                      data.ai_available
-                        ? 'AI interpretation'
-                        : 'Deterministic fallback'
-                    }
-                  </span>
-
-                  {
-                    data.analysis_execution
-                    && (
-                      <span className="analyst-analysis-status">
-                        <Clock3 size={13} />
-                        {
-                          data.analysis_execution
-                            .successful_steps
-                        }
-                        /
-                        {
-                          data.analysis_execution
-                            .total_steps
-                        }
-                        {' '}
-                        analysis completed
-                      </span>
-                    )
-                  }
-                </div>
-
-                {
-                  data.answer.likely_driver
-                  && (
-                    <div className="analyst-driver">
-                      <div className="analyst-driver-icon">
-                        <Lightbulb size={18} />
-                      </div>
-
-                      <div>
-                        <span>Likely driver</span>
-                        <strong>
-                          {humanizeMetric(
-                            data.answer.likely_driver
-                          )}
-                        </strong>
-                      </div>
-                    </div>
-                  )
-                }
-
-                {
-                  data.answer.evidence?.length > 0
-                  && (
-                    <div className="analyst-section">
-                      <div className="analyst-section-title">
-                        Evidence
-                      </div>
-
-                      <div className="analyst-evidence-list">
-                        {
-                          data.answer.evidence.map(
-                            (evidence, index) => (
-                              <div
-                                className="analyst-evidence-item"
-                                key={`${evidence}-${index}`}
-                              >
-                                <span>{index + 1}</span>
-                                <p>{evidence}</p>
-                              </div>
-                            )
-                          )
-                        }
-                      </div>
-                    </div>
-                  )
-                }
-
-                {
-                  data.answer.recommended_actions?.length > 0
-                  && (
-                    <div className="analyst-section">
-                      <div className="analyst-section-title">
-                        Recommended Actions
-                      </div>
-
-                      <div className="analyst-action-list">
-                        {
-                          data.answer.recommended_actions.map(
-                            (action, index) => (
-                              <div
-                                className="analyst-action-item"
-                                key={`${action}-${index}`}
-                              >
-                                <div>{index + 1}</div>
-                                <p>{action}</p>
-                              </div>
-                            )
-                          )
-                        }
-                      </div>
-                    </div>
-                  )
-                }
-              </div>
-            )
-          }
-        </div>
-
-        <div className="analyst-right">
-          <div className="card analyst-info-card">
-            <div className="card-title">
-              How ProfitLens Answers
+            <div className="analyst-hint">
+              Example: Why is RTO high?
             </div>
 
-            <div className="analyst-process">
-              <div>
-                <span>1</span>
-                <div>
-                  <strong>Understand</strong>
-                  <p>Classifies the business question.</p>
-                </div>
-              </div>
+            <button
+              className="primary-button"
+              type="submit"
+              disabled={
+                !canSubmit
+              }
+            >
+              {
+                loading
+                  ? (
+                    <>
+                      <Loader2
+                        size={16}
+                      />
+                      Analysing...
+                    </>
+                  )
+                  : (
+                    <>
+                      <Sparkles
+                        size={16}
+                      />
+                      Ask ProfitLens
+                    </>
+                  )
+              }
+            </button>
 
-              <div>
-                <span>2</span>
-                <div>
-                  <strong>Calculate</strong>
-                  <p>Runs deterministic analytics.</p>
-                </div>
-              </div>
-
-              <div>
-                <span>3</span>
-                <div>
-                  <strong>Interpret</strong>
-                  <p>AI explains the measured result.</p>
-                </div>
-              </div>
-
-              <div>
-                <span>4</span>
-                <div>
-                  <strong>Guardrail</strong>
-                  <p>Missing evidence stays unavailable.</p>
-                </div>
-              </div>
-            </div>
           </div>
 
-          <div className="card analyst-info-card">
-            <div className="card-title">
-              Supported Questions
-            </div>
+        </form>
 
-            <div className="analyst-capabilities">
-              <span>Revenue</span>
-              <span>Orders</span>
-              <span>AOV</span>
-              <span>Products</span>
-              <span>Customers</span>
-              <span>Logistics</span>
-              <span>Delivery</span>
-              <span>Cancellations</span>
-              <span>Business Health</span>
-              <span>Scenarios</span>
-            </div>
-          </div>
+      </div>
 
-          <div className="notice info">
-            ProfitLens will not invent CAC, LTV,
-            ROAS, RTO, contribution margin or other
-            metrics when the required datasets are
-            not connected.
-          </div>
+
+      <div className="section-heading">
+        <div>
+          <h2>
+            Try a question
+          </h2>
+
+          <p>
+            Common founder and operator questions.
+          </p>
         </div>
       </div>
+
+
+      <div className="question-chip-grid">
+        {
+          EXAMPLE_QUESTIONS.map(
+            (
+              item
+            ) => (
+              <button
+                key={
+                  item
+                }
+                type="button"
+                className="question-chip"
+                onClick={
+                  () => {
+                    void askQuestion(
+                      item
+                    )
+                  }
+                }
+                disabled={
+                  loading
+                }
+              >
+                {item}
+              </button>
+            )
+          )
+        }
+      </div>
+
+
+      {
+        error
+        && (
+          <div className="card error-card">
+            <AlertTriangle
+              size={20}
+            />
+
+            <div>
+              <strong>
+                Could not complete analysis
+              </strong>
+
+              <p>
+                {error}
+              </p>
+            </div>
+          </div>
+        )
+      }
+
+
+      {
+        loading
+        && (
+          <div className="card analyst-loading">
+            <Loader2
+              size={22}
+            />
+
+            <div>
+              <strong>
+                Analysing {month}
+              </strong>
+
+              <p>
+                ProfitLens is preparing deterministic
+                business evidence and interpretation.
+              </p>
+            </div>
+          </div>
+        )
+      }
+
+
+      {
+        result
+        && !loading
+        && (
+          <div className="analyst-result-stack">
+
+            <div className="card analyst-answer-card">
+
+              <div className="analyst-answer-header">
+                <div>
+                  <div className="eyebrow">
+                    Answer
+                  </div>
+
+                  <h3>
+                    {
+                      result.question
+                    }
+                  </h3>
+                </div>
+
+                <div
+                  className={
+                    result.ai_available
+                      ? 'status-badge success'
+                      : 'status-badge warning'
+                  }
+                >
+                  {
+                    result.ai_available
+                      ? (
+                        <>
+                          <Bot
+                            size={14}
+                          />
+                          AI interpreted
+                        </>
+                      )
+                      : (
+                        <>
+                          <CheckCircle2
+                            size={14}
+                          />
+                          Deterministic fallback
+                        </>
+                      )
+                  }
+                </div>
+              </div>
+
+
+              <div className="analyst-main-answer">
+                {
+                  result
+                    .answer
+                    .answer
+                }
+              </div>
+
+
+              <div className="analyst-meta-row">
+
+                <div>
+                  <span>
+                    Month
+                  </span>
+
+                  <strong>
+                    {
+                      result.month
+                    }
+                  </strong>
+                </div>
+
+                <div>
+                  <span>
+                    Intent
+                  </span>
+
+                  <strong>
+                    {
+                      result.question_type
+                    }
+                  </strong>
+                </div>
+
+                <div>
+                  <span>
+                    Analysis steps
+                  </span>
+
+                  <strong>
+                    {
+                      result.analysis_execution
+                        ? `${result.analysis_execution.successful_steps}/${result.analysis_execution.total_steps}`
+                        : '—'
+                    }
+                  </strong>
+                </div>
+
+              </div>
+
+            </div>
+
+
+            <div className="card">
+
+              <div className="section-heading compact">
+                <div>
+                  <h3>
+                    Evidence
+                  </h3>
+
+                  <p>
+                    Deterministic facts supporting the answer.
+                  </p>
+                </div>
+              </div>
+
+
+              {
+                result
+                  .answer
+                  .evidence
+                  .length > 0
+                  ? (
+                    <div className="evidence-list">
+                      {
+                        result
+                          .answer
+                          .evidence
+                          .map(
+                            (
+                              evidence,
+                              index,
+                            ) => (
+                              <div
+                                className="evidence-item"
+                                key={
+                                  `${evidence}-${index}`
+                                }
+                              >
+                                <CheckCircle2
+                                  size={16}
+                                />
+
+                                <span>
+                                  {evidence}
+                                </span>
+                              </div>
+                            )
+                          )
+                      }
+                    </div>
+                  )
+                  : (
+                    <div className="empty-state">
+                      No supporting evidence was returned.
+                    </div>
+                  )
+              }
+
+            </div>
+
+
+            <div className="card">
+
+              <div className="section-heading compact">
+                <div>
+                  <h3>
+                    Likely Driver
+                  </h3>
+                </div>
+              </div>
+
+              <p className="analyst-driver">
+                {
+                  result
+                    .answer
+                    .likely_driver
+                }
+              </p>
+
+            </div>
+
+
+            {
+              result
+                .answer
+                .recommended_actions
+                .length > 0
+              && (
+                <div className="card">
+
+                  <div className="section-heading compact">
+                    <div>
+                      <h3>
+                        Recommended Actions
+                      </h3>
+
+                      <p>
+                        Actions based on the available evidence.
+                      </p>
+                    </div>
+                  </div>
+
+
+                  <div className="action-list">
+                    {
+                      result
+                        .answer
+                        .recommended_actions
+                        .map(
+                          (
+                            action,
+                            index,
+                          ) => (
+                            <div
+                              className="action-item"
+                              key={
+                                `${action}-${index}`
+                              }
+                            >
+                              <div className="action-number">
+                                {
+                                  index + 1
+                                }
+                              </div>
+
+                              <span>
+                                {action}
+                              </span>
+                            </div>
+                          )
+                        )
+                    }
+                  </div>
+
+                </div>
+              )
+            }
+
+
+            {
+              !result.ai_available
+              && (
+                <div className="card limitation-card">
+
+                  <AlertTriangle
+                    size={20}
+                  />
+
+                  <div>
+                    <strong>
+                      AI interpretation unavailable
+                    </strong>
+
+                    <p>
+                      ProfitLens returned a deterministic
+                      analytical answer instead. Business
+                      metrics remain available even when the
+                      external AI service is rate-limited or
+                      temporarily unavailable.
+                    </p>
+                  </div>
+
+                </div>
+              )
+            }
+
+          </div>
+        )
+      }
+
+
+      <div className="card limitation-card">
+
+        <div>
+          <strong>
+            Analytical guardrail
+          </strong>
+
+          <p>
+            AI does not calculate ProfitLens financial
+            or operational metrics. Revenue, profit,
+            marketing, customer, logistics, product and
+            inventory facts come from deterministic
+            analytics. AI is used only for interpretation
+            and evidence-based recommendations.
+          </p>
+        </div>
+
+      </div>
+
     </div>
   )
 }

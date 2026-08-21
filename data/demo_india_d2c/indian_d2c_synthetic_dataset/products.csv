@@ -1,0 +1,251 @@
+sku_id,product_name,category,list_price,cogs_per_unit
+SKU_001,Premium Skincare Product 001,Skincare,230.0,118.64
+SKU_002,Premium Dresses Product 002,Dresses,1060.0,437.27
+SKU_003,Premium Skincare Product 003,Skincare,550.0,198.09
+SKU_004,Premium Accessories Product 004,Accessories,280.0,134.05
+SKU_005,Premium T-Shirts Product 005,T-Shirts,550.0,179.98
+SKU_006,Premium Ethnic Wear Product 006,Ethnic Wear,1660.0,524.21
+SKU_007,Premium Skincare Product 007,Skincare,510.0,170.14
+SKU_008,Premium Skincare Product 008,Skincare,600.0,302.45
+SKU_009,Premium T-Shirts Product 009,T-Shirts,410.0,138.94
+SKU_010,Premium Dresses Product 010,Dresses,780.0,414.4
+SKU_011,Premium Jeans Product 011,Jeans,1100.0,409.61
+SKU_012,Premium Ethnic Wear Product 012,Ethnic Wear,870.0,295.61
+SKU_013,Premium Accessories Product 013,Accessories,370.0,112.2
+SKU_014,Premium Skincare Product 014,Skincare,230.0,72.04
+SKU_015,Premium Dresses Product 015,Dresses,740.0,230.48
+SKU_016,Premium Shirts Product 016,Shirts,510.0,226.38
+SKU_017,Premium Footwear Product 017,Footwear,1100.0,920.42
+SKU_018,Premium T-Shirts Product 018,T-Shirts,510.0,215.43
+SKU_019,Premium Skincare Product 019,Skincare,690.0,353.58
+SKU_020,Premium Footwear Product 020,Footwear,1520.0,471.76
+SKU_021,Premium Skincare Product 021,Skincare,510.0,181.58
+SKU_022,Premium Jeans Product 022,Jeans,780.0,283.19
+SKU_023,Premium Ethnic Wear Product 023,Ethnic Wear,1430.0,576.01
+SKU_024,Premium Ethnic Wear Product 024,Ethnic Wear,1330.0,416.48
+SKU_025,Premium Skincare Product 025,Skincare,180.0,79.09
+SKU_026,Premium Shirts Product 026,Shirts,640.0,209.42
+SKU_027,Premium Dresses Product 027,Dresses,640.0,201.42
+SKU_028,Premium T-Shirts Product 028,T-Shirts,550.0,292.98
+SKU_029,Premium T-Shirts Product 029,T-Shirts,510.0,258.28
+SKU_030,Premium Accessories Product 030,Accessories,180.0,96.48
+SKU_031,Premium Skincare Product 031,Skincare,320.0,160.93
+SKU_032,Premium Ethnic Wear Product 032,Ethnic Wear,1840.0,910.33
+SKU_033,Premium Jeans Product 033,Jeans,1150.0,568.73
+SKU_034,Premium Jeans Product 034,Jeans,1150.0,383.53
+SKU_035,Premium Dresses Product 035,Dresses,1200.0,512.36
+SKU_036,Premium Shirts Product 036,Shirts,690.0,354.7
+SKU_037,Premium T-Shirts Product 037,T-Shirts,550.0,218.56
+SKU_038,Premium Dresses Product 038,Dresses,920.0,422.89
+SKU_039,Premium Shirts Product 039,Shirts,550.0,184.74
+SKU_040,Premium Accessories Product 040,Accessories,280.0,115.58
+SKU_041,Premium Dresses Product 041,Dresses,690.0,246.96
+SKU_042,Premium Skincare Product 042,Skincare,460.0,180.09
+SKU_043,Premium Accessories Product 043,Accessories,410.0,157.92
+SKU_044,Premium Jeans Product 044,Jeans,920.0,363.1
+SKU_045,Premium Skincare Product 045,Skincare,280.0,103.11
+SKU_046,Premium Skincare Product 046,Skincare,640.0,345.72
+SKU_047,Premium Jeans Product 047,Jeans,1150.0,483.07
+SKU_048,Premium Jeans Product 048,Jeans,1330.0,509.53
+SKU_049,Premium Accessories Product 049,Accessories,370.0,188.23
+SKU_050,Premium T-Shirts Product 050,T-Shirts,460.0,212.83
+SKU_051,Premium Shirts Product 051,Shirts,550.0,238.91
+SKU_052,Premium T-Shirts Product 052,T-Shirts,550.0,252.73
+SKU_053,Premium Skincare Product 053,Skincare,230.0,111.03
+SKU_054,Premium Accessories Product 054,Accessories,280.0,96.6
+SKU_055,Premium Accessories Product 055,Accessories,460.0,236.74
+SKU_056,Premium Skincare Product 056,Skincare,690.0,229.64
+SKU_057,Premium Dresses Product 057,Dresses,1290.0,416.87
+SKU_058,Premium Footwear Product 058,Footwear,1200.0,949.69
+SKU_059,Premium T-Shirts Product 059,T-Shirts,460.0,153.65
+SKU_060,Premium T-Shirts Product 060,T-Shirts,600.0,322.51
+SKU_061,Premium Accessories Product 061,Accessories,230.0,102.93
+SKU_062,Premium Dresses Product 062,Dresses,1150.0,569.77
+SKU_063,Premium Footwear Product 063,Footwear,1610.0,863.53
+SKU_064,Premium Skincare Product 064,Skincare,740.0,267.26
+SKU_065,Premium Footwear Product 065,Footwear,1330.0,431.75
+SKU_066,Premium Footwear Product 066,Footwear,1200.0,542.82
+SKU_067,Premium Footwear Product 067,Footwear,740.0,324.55
+SKU_068,Premium Jeans Product 068,Jeans,780.0,346.31
+SKU_069,Premium T-Shirts Product 069,T-Shirts,460.0,197.91
+SKU_070,Premium Dresses Product 070,Dresses,920.0,451.48
+SKU_071,Premium Shirts Product 071,Shirts,920.0,389.0
+SKU_072,Premium Dresses Product 072,Dresses,1150.0,517.18
+SKU_073,Premium Skincare Product 073,Skincare,280.0,90.91
+SKU_074,Premium Shirts Product 074,Shirts,920.0,302.78
+SKU_075,Premium T-Shirts Product 075,T-Shirts,550.0,256.17
+SKU_076,Premium Jeans Product 076,Jeans,740.0,297.64
+SKU_077,Premium Jeans Product 077,Jeans,1330.0,623.84
+SKU_078,Premium Accessories Product 078,Accessories,600.0,229.1
+SKU_079,Premium Footwear Product 079,Footwear,1330.0,654.28
+SKU_080,Premium Skincare Product 080,Skincare,830.0,304.23
+SKU_081,Premium Accessories Product 081,Accessories,600.0,226.23
+SKU_082,Premium Dresses Product 082,Dresses,830.0,280.87
+SKU_083,Premium Skincare Product 083,Skincare,870.0,466.5
+SKU_084,Premium Shirts Product 084,Shirts,510.0,207.0
+SKU_085,Premium T-Shirts Product 085,T-Shirts,550.0,266.07
+SKU_086,Premium T-Shirts Product 086,T-Shirts,410.0,181.24
+SKU_087,Premium Accessories Product 087,Accessories,690.0,341.38
+SKU_088,Premium Dresses Product 088,Dresses,1240.0,521.25
+SKU_089,Premium Shirts Product 089,Shirts,510.0,276.36
+SKU_090,Premium Dresses Product 090,Dresses,870.0,418.81
+SKU_091,Premium T-Shirts Product 091,T-Shirts,550.0,181.8
+SKU_092,Premium Accessories Product 092,Accessories,690.0,353.48
+SKU_093,Premium Dresses Product 093,Dresses,1240.0,410.31
+SKU_094,Premium Jeans Product 094,Jeans,1150.0,513.92
+SKU_095,Premium Jeans Product 095,Jeans,690.0,208.98
+SKU_096,Premium Footwear Product 096,Footwear,1290.0,532.5
+SKU_097,Premium Jeans Product 097,Jeans,1200.0,446.94
+SKU_098,Premium T-Shirts Product 098,T-Shirts,550.0,228.69
+SKU_099,Premium T-Shirts Product 099,T-Shirts,410.0,155.28
+SKU_100,Premium Ethnic Wear Product 100,Ethnic Wear,1200.0,633.17
+SKU_101,Premium Ethnic Wear Product 101,Ethnic Wear,1560.0,512.29
+SKU_102,Premium Accessories Product 102,Accessories,600.0,328.21
+SKU_103,Premium Shirts Product 103,Shirts,460.0,170.48
+SKU_104,Premium Ethnic Wear Product 104,Ethnic Wear,1700.0,866.47
+SKU_105,Premium Skincare Product 105,Skincare,180.0,100.91
+SKU_106,Premium Accessories Product 106,Accessories,180.0,85.61
+SKU_107,Premium Dresses Product 107,Dresses,690.0,222.45
+SKU_108,Premium Jeans Product 108,Jeans,1150.0,602.66
+SKU_109,Premium T-Shirts Product 109,T-Shirts,600.0,215.24
+SKU_110,Premium Ethnic Wear Product 110,Ethnic Wear,690.0,231.52
+SKU_111,Premium Dresses Product 111,Dresses,1200.0,1117.6
+SKU_112,Premium Shirts Product 112,Shirts,830.0,384.04
+SKU_113,Premium Jeans Product 113,Jeans,1330.0,401.87
+SKU_114,Premium Footwear Product 114,Footwear,550.0,172.58
+SKU_115,Premium Shirts Product 115,Shirts,870.0,437.09
+SKU_116,Premium Skincare Product 116,Skincare,600.0,214.9
+SKU_117,Premium Skincare Product 117,Skincare,370.0,115.52
+SKU_118,Premium Accessories Product 118,Accessories,640.0,321.93
+SKU_119,Premium Dresses Product 119,Dresses,1290.0,634.79
+SKU_120,Premium Footwear Product 120,Footwear,1560.0,741.95
+SKU_121,Premium Footwear Product 121,Footwear,1430.0,441.97
+SKU_122,Premium Accessories Product 122,Accessories,600.0,209.41
+SKU_123,Premium T-Shirts Product 123,T-Shirts,320.0,137.02
+SKU_124,Premium Dresses Product 124,Dresses,640.0,312.95
+SKU_125,Premium T-Shirts Product 125,T-Shirts,460.0,235.64
+SKU_126,Premium Dresses Product 126,Dresses,1060.0,358.3
+SKU_127,Premium Jeans Product 127,Jeans,1290.0,448.4
+SKU_128,Premium T-Shirts Product 128,T-Shirts,550.0,202.8
+SKU_129,Premium T-Shirts Product 129,T-Shirts,320.0,175.26
+SKU_130,Premium Footwear Product 130,Footwear,1330.0,603.94
+SKU_131,Premium Shirts Product 131,Shirts,690.0,313.1
+SKU_132,Premium Ethnic Wear Product 132,Ethnic Wear,740.0,228.45
+SKU_133,Premium Footwear Product 133,Footwear,780.0,373.1
+SKU_134,Premium Jeans Product 134,Jeans,1330.0,457.78
+SKU_135,Premium Footwear Product 135,Footwear,920.0,318.05
+SKU_136,Premium T-Shirts Product 136,T-Shirts,320.0,175.24
+SKU_137,Premium Ethnic Wear Product 137,Ethnic Wear,1380.0,684.28
+SKU_138,Premium Dresses Product 138,Dresses,920.0,422.16
+SKU_139,Premium Skincare Product 139,Skincare,780.0,262.82
+SKU_140,Premium T-Shirts Product 140,T-Shirts,510.0,271.23
+SKU_141,Premium Dresses Product 141,Dresses,970.0,429.18
+SKU_142,Premium Dresses Product 142,Dresses,780.0,371.19
+SKU_143,Premium Ethnic Wear Product 143,Ethnic Wear,970.0,516.71
+SKU_144,Premium Footwear Product 144,Footwear,1240.0,418.54
+SKU_145,Premium Dresses Product 145,Dresses,920.0,368.75
+SKU_146,Premium Shirts Product 146,Shirts,690.0,288.6
+SKU_147,Premium Jeans Product 147,Jeans,780.0,260.66
+SKU_148,Premium Footwear Product 148,Footwear,640.0,237.8
+SKU_149,Premium Dresses Product 149,Dresses,640.0,261.91
+SKU_150,Premium T-Shirts Product 150,T-Shirts,410.0,187.23
+SKU_151,Premium Skincare Product 151,Skincare,460.0,185.17
+SKU_152,Premium Ethnic Wear Product 152,Ethnic Wear,1430.0,573.34
+SKU_153,Premium T-Shirts Product 153,T-Shirts,550.0,246.58
+SKU_154,Premium Footwear Product 154,Footwear,780.0,296.41
+SKU_155,Premium T-Shirts Product 155,T-Shirts,600.0,241.77
+SKU_156,Premium Accessories Product 156,Accessories,140.0,57.56
+SKU_157,Premium Jeans Product 157,Jeans,780.0,346.31
+SKU_158,Premium Accessories Product 158,Accessories,230.0,101.33
+SKU_159,Premium Accessories Product 159,Accessories,460.0,212.3
+SKU_160,Premium Skincare Product 160,Skincare,690.0,319.33
+SKU_161,Premium T-Shirts Product 161,T-Shirts,510.0,251.18
+SKU_162,Premium Ethnic Wear Product 162,Ethnic Wear,1060.0,462.45
+SKU_163,Premium Shirts Product 163,Shirts,550.0,251.78
+SKU_164,Premium T-Shirts Product 164,T-Shirts,460.0,179.29
+SKU_165,Premium Footwear Product 165,Footwear,1610.0,779.3
+SKU_166,Premium Jeans Product 166,Jeans,1060.0,551.61
+SKU_167,Premium Skincare Product 167,Skincare,280.0,117.36
+SKU_168,Premium Skincare Product 168,Skincare,830.0,355.9
+SKU_169,Premium Jeans Product 169,Jeans,870.0,330.74
+SKU_170,Premium Ethnic Wear Product 170,Ethnic Wear,1610.0,819.81
+SKU_171,Premium Jeans Product 171,Jeans,970.0,317.63
+SKU_172,Premium Footwear Product 172,Footwear,1060.0,336.32
+SKU_173,Premium Shirts Product 173,Shirts,870.0,274.2
+SKU_174,Premium Ethnic Wear Product 174,Ethnic Wear,1660.0,612.8
+SKU_175,Premium Shirts Product 175,Shirts,740.0,252.47
+SKU_176,Premium T-Shirts Product 176,T-Shirts,410.0,156.52
+SKU_177,Premium Dresses Product 177,Dresses,640.0,195.43
+SKU_178,Premium Ethnic Wear Product 178,Ethnic Wear,1560.0,792.39
+SKU_179,Premium Ethnic Wear Product 179,Ethnic Wear,1520.0,596.49
+SKU_180,Premium Skincare Product 180,Skincare,780.0,264.48
+SKU_181,Premium Ethnic Wear Product 181,Ethnic Wear,970.0,318.55
+SKU_182,Premium Ethnic Wear Product 182,Ethnic Wear,1380.0,539.72
+SKU_183,Premium Footwear Product 183,Footwear,1100.0,605.7
+SKU_184,Premium Jeans Product 184,Jeans,1380.0,680.15
+SKU_185,Premium Skincare Product 185,Skincare,460.0,216.86
+SKU_186,Premium Accessories Product 186,Accessories,320.0,153.17
+SKU_187,Premium Jeans Product 187,Jeans,1240.0,571.38
+SKU_188,Premium T-Shirts Product 188,T-Shirts,410.0,125.17
+SKU_189,Premium Skincare Product 189,Skincare,640.0,277.54
+SKU_190,Premium Shirts Product 190,Shirts,550.0,188.04
+SKU_191,Premium Ethnic Wear Product 191,Ethnic Wear,1520.0,772.54
+SKU_192,Premium Shirts Product 192,Shirts,510.0,276.67
+SKU_193,Premium T-Shirts Product 193,T-Shirts,600.0,566.68
+SKU_194,Premium Skincare Product 194,Skincare,550.0,184.98
+SKU_195,Premium T-Shirts Product 195,T-Shirts,460.0,182.96
+SKU_196,Premium Shirts Product 196,Shirts,640.0,205.94
+SKU_197,Premium Footwear Product 197,Footwear,1470.0,601.04
+SKU_198,Premium Ethnic Wear Product 198,Ethnic Wear,1560.0,652.51
+SKU_199,Premium Shirts Product 199,Shirts,920.0,317.46
+SKU_200,Premium Jeans Product 200,Jeans,780.0,411.7
+SKU_201,Premium Skincare Product 201,Skincare,870.0,312.92
+SKU_202,Premium Ethnic Wear Product 202,Ethnic Wear,740.0,274.37
+SKU_203,Premium Dresses Product 203,Dresses,740.0,328.5
+SKU_204,Premium T-Shirts Product 204,T-Shirts,460.0,194.53
+SKU_205,Premium T-Shirts Product 205,T-Shirts,320.0,116.05
+SKU_206,Premium Shirts Product 206,Shirts,460.0,234.78
+SKU_207,Premium T-Shirts Product 207,T-Shirts,550.0,254.97
+SKU_208,Premium Accessories Product 208,Accessories,510.0,236.37
+SKU_209,Premium T-Shirts Product 209,T-Shirts,550.0,173.48
+SKU_210,Premium Dresses Product 210,Dresses,1150.0,450.22
+SKU_211,Premium Accessories Product 211,Accessories,550.0,212.13
+SKU_212,Premium Footwear Product 212,Footwear,1100.0,564.04
+SKU_213,Premium Shirts Product 213,Shirts,600.0,294.08
+SKU_214,Premium Skincare Product 214,Skincare,510.0,259.34
+SKU_215,Premium Accessories Product 215,Accessories,320.0,169.57
+SKU_216,Premium Accessories Product 216,Accessories,410.0,184.76
+SKU_217,Premium T-Shirts Product 217,T-Shirts,320.0,123.84
+SKU_218,Premium T-Shirts Product 218,T-Shirts,550.0,234.24
+SKU_219,Premium Ethnic Wear Product 219,Ethnic Wear,1700.0,555.12
+SKU_220,Premium Dresses Product 220,Dresses,970.0,385.87
+SKU_221,Premium Jeans Product 221,Jeans,1380.0,631.43
+SKU_222,Premium Dresses Product 222,Dresses,1240.0,427.56
+SKU_223,Premium Accessories Product 223,Accessories,140.0,47.85
+SKU_224,Premium Ethnic Wear Product 224,Ethnic Wear,1060.0,323.83
+SKU_225,Premium Jeans Product 225,Jeans,1100.0,454.71
+SKU_226,Premium Ethnic Wear Product 226,Ethnic Wear,1790.0,675.96
+SKU_227,Premium T-Shirts Product 227,T-Shirts,320.0,97.05
+SKU_228,Premium Footwear Product 228,Footwear,1200.0,441.76
+SKU_229,Premium Footwear Product 229,Footwear,740.0,337.2
+SKU_230,Premium T-Shirts Product 230,T-Shirts,510.0,275.75
+SKU_231,Premium T-Shirts Product 231,T-Shirts,550.0,231.3
+SKU_232,Premium Dresses Product 232,Dresses,1010.0,496.02
+SKU_233,Premium Ethnic Wear Product 233,Ethnic Wear,1430.0,684.51
+SKU_234,Premium Footwear Product 234,Footwear,1520.0,820.69
+SKU_235,Premium Ethnic Wear Product 235,Ethnic Wear,1430.0,736.58
+SKU_236,Premium Skincare Product 236,Skincare,740.0,241.64
+SKU_237,Premium Dresses Product 237,Dresses,970.0,843.91
+SKU_238,Premium Skincare Product 238,Skincare,690.0,319.62
+SKU_239,Premium T-Shirts Product 239,T-Shirts,410.0,225.85
+SKU_240,Premium T-Shirts Product 240,T-Shirts,600.0,222.32
+SKU_241,Premium Skincare Product 241,Skincare,780.0,381.0
+SKU_242,Premium Skincare Product 242,Skincare,690.0,266.59
+SKU_243,Premium Shirts Product 243,Shirts,460.0,142.57
+SKU_244,Premium Footwear Product 244,Footwear,640.0,318.13
+SKU_245,Premium Footwear Product 245,Footwear,1610.0,879.43
+SKU_246,Premium Skincare Product 246,Skincare,510.0,210.43
+SKU_247,Premium Footwear Product 247,Footwear,870.0,351.95
+SKU_248,Premium Dresses Product 248,Dresses,1290.0,641.74
+SKU_249,Premium Jeans Product 249,Jeans,1150.0,504.49
+SKU_250,Premium Dresses Product 250,Dresses,640.0,322.1

@@ -1,0 +1,6 @@
+courier_id,courier_name,zone,base_shipping_cost,cod_fee,rto_fee,delivery_sla_days
+CR_01,Delhivery,All India,72,28,95,4
+CR_02,Xpressbees,All India,68,25,90,5
+CR_03,Ecom Express,All India,70,30,98,5
+CR_04,DTDC,All India,78,27,105,5
+CR_05,Blue Dart,Metro / Premium,105,0,125,3

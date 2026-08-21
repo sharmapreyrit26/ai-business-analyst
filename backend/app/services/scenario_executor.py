@@ -9,57 +9,99 @@ from backend.app.services.scenario_engine import (
 
 def execute_scenario_question(
     question: str,
-    month: str
+    month: str,
 ):
     """
-    Parse and execute a natural-language
-    scenario deterministically.
+    Parse and execute a natural-language scenario
+    deterministically.
+
+    The parser determines the scenario and parameters.
+
+    The scenario engine owns all calculations.
+
+    No LLM is used to calculate scenario results.
     """
 
-    parsed = parse_scenario_question(
-        question
+    parsed = (
+        parse_scenario_question(
+            question
+        )
     )
 
     if (
-        parsed.get("status")
+        parsed.get(
+            "status"
+        )
         != "complete"
     ):
 
         return {
             "question": question,
             "month": month,
+
             "status": parsed.get(
-                "status"
+                "status",
+                "unsupported_scenario",
             ),
-            "parser_result": parsed,
+
+            "scenario_type": (
+                parsed.get(
+                    "scenario_type"
+                )
+            ),
+
+            "parameters": None,
+
+            "parser_result": (
+                parsed
+            ),
+
             "scenario_result": None,
         }
 
-    scenario_type = parsed[
-        "scenario_type"
-    ]
-
-    parameters = parsed.get(
-        "parameters",
-        {}
+    scenario_type = (
+        parsed[
+            "scenario_type"
+        ]
     )
 
-    result = run_scenario(
-        month,
-        scenario_type,
-        **parameters
+    parameters = (
+        parsed.get(
+            "parameters",
+            {},
+        )
+    )
+
+    result = (
+        run_scenario(
+            month,
+            scenario_type,
+            **parameters,
+        )
     )
 
     return {
         "question": question,
         "month": month,
+
         "status": result.get(
             "status",
-            "complete"
+            "complete",
         ),
+
         "scenario_type": (
             scenario_type
         ),
-        "parameters": parameters,
-        "scenario_result": result,
+
+        "parameters": (
+            parameters
+        ),
+
+        "parser_result": (
+            parsed
+        ),
+
+        "scenario_result": (
+            result
+        ),
     }

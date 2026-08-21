@@ -1,398 +1,661 @@
 import {
   useEffect,
+  useMemo,
   useState,
 } from 'react'
 
 import {
   AlertTriangle,
-  CheckCircle2,
-  Database,
-  KeyRound,
   Repeat2,
-  UserRound,
+  RotateCcw,
+  ShoppingCart,
   Users,
   WalletCards,
 } from 'lucide-react'
 
-import { api } from '../api/profitlens'
-import { ErrorState, LoadingState } from '../components/PageState'
-import { SectionTitle } from '../components/SectionTitle'
-import type { CustomerAnalyticsResponse } from '../types/api'
 import {
-  fmtNumber,
-  fmtPct,
-  humanizeMetric,
-} from '../utils'
+  api,
+} from '../api/profitlens'
+
+import type {
+  D2CAcquisitionChannelRow,
+  D2CCustomerCohortRow,
+  D2CCustomerSummaryResponse,
+} from '../types/api'
+
 
 type CustomersProps = {
   month: string
 }
 
+
+function formatCurrency(
+  value: number
+) {
+  return new Intl.NumberFormat(
+    'en-IN',
+    {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }
+  ).format(value)
+}
+
+
+function formatNumber(
+  value: number
+) {
+  return new Intl.NumberFormat(
+    'en-IN'
+  ).format(value)
+}
+
+
 export default function Customers({
   month,
 }: CustomersProps) {
-  const [data, setData] =
-    useState<CustomerAnalyticsResponse | null>(null)
+  const [
+    summary,
+    setSummary,
+  ] = useState<D2CCustomerSummaryResponse | null>(
+    null
+  )
 
-  const [error, setError] =
-    useState('')
+  const [
+    channels,
+    setChannels,
+  ] = useState<D2CAcquisitionChannelRow[]>(
+    []
+  )
 
-  useEffect(() => {
-    let active = true
+  const [
+    cohorts,
+    setCohorts,
+  ] = useState<D2CCustomerCohortRow[]>(
+    []
+  )
 
-    setData(null)
-    setError('')
+  const [
+    loading,
+    setLoading,
+  ] = useState(true)
 
-    api.customers()
-      .then((result) => {
-        if (active) {
-          setData(result)
-        }
-      })
-      .catch((err) => {
-        if (!active) return
+  const [
+    error,
+    setError,
+  ] = useState<string | null>(
+    null
+  )
 
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Unable to load customer analytics.'
+
+  useEffect(
+    () => {
+      let cancelled = false
+
+      setLoading(true)
+      setError(null)
+
+      Promise.all([
+        api.customers(month),
+        api.acquisitionChannels(month),
+        api.customerCohorts(),
+      ])
+        .then(
+          ([
+            summaryResponse,
+            channelResponse,
+            cohortResponse,
+          ]) => {
+            if (cancelled) {
+              return
+            }
+
+            setSummary(
+              summaryResponse
+            )
+
+            setChannels(
+              channelResponse.data
+            )
+
+            setCohorts(
+              cohortResponse.data
+            )
+          }
         )
-      })
+        .catch(
+          (
+            requestError
+          ) => {
+            if (cancelled) {
+              return
+            }
 
-    return () => {
-      active = false
-    }
-  }, [month])
+            setSummary(null)
+            setChannels([])
+            setCohorts([])
 
-  if (error) return <ErrorState error={error} />
-  if (!data) return <LoadingState />
+            setError(
+              requestError
+                instanceof Error
+                ? requestError.message
+                : 'Could not load customer analytics.'
+            )
+          }
+        )
+        .finally(
+          () => {
+            if (!cancelled) {
+              setLoading(false)
+            }
+          }
+        )
 
-  const quality =
-    data.data_quality || {}
+      return () => {
+        cancelled = true
+      }
+    },
+    [
+      month,
+    ]
+  )
 
-  const available =
-    data.available_analysis || {}
 
-  const unavailable =
-    data.unavailable_analysis || {}
+  const selectedMonthCohorts =
+    useMemo(
+      () => {
+        return cohorts.filter(
+          (
+            row
+          ) =>
+            row.cohort_month
+            === month
+        )
+      },
+      [
+        cohorts,
+        month,
+      ]
+    )
 
-  const nextRequirement =
-    data.next_data_requirement || {}
 
-  const customerSummary =
-    available.customer_order_summary || {}
+  if (loading) {
+    return (
+      <div className="page">
+        <div className="card">
+          Loading customer analytics...
+        </div>
+      </div>
+    )
+  }
 
-  const unavailableMetrics =
-    Object.entries(unavailable)
+
+  if (
+    error
+    || !summary
+  ) {
+    return (
+      <div className="page">
+        <div className="card error-card">
+          <AlertTriangle size={20} />
+
+          <div>
+            <strong>
+              Could not load customers
+            </strong>
+
+            <p>
+              {
+                error
+                || 'Unknown error'
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
 
   return (
     <div className="page">
-      <SectionTitle
-        title="Customer Analysis"
-        subtitle={
-          'Customer-data coverage, available metrics, '
-          + 'and the additional data required for retention, '
-          + 'repeat purchase and LTV analysis.'
-        }
-      />
 
-      <div className="customer-status-banner">
-        <div className="customer-status-icon">
-          <AlertTriangle size={20} />
-        </div>
-
+      <div className="page-header">
         <div>
-          <span>Customer analytics status</span>
-          <strong>
-            {humanizeMetric(data.status)}
-          </strong>
+          <div className="eyebrow">
+            Customer analytics
+          </div>
+
+          <h2>
+            Customer Performance
+          </h2>
+
           <p>
-            ProfitLens can analyse the customer records
-            currently available, but it will not fabricate
-            retention or repeat-purchase metrics without a
-            persistent customer identifier.
+            Acquisition, repeat behaviour,
+            RTO and customer quality for {month}.
           </p>
         </div>
       </div>
 
-      <div className="customer-kpi-grid">
-        <div className="card customer-kpi">
-          <div className="customer-kpi-icon blue">
-            <Users size={18} />
-          </div>
-          <div>
-            <span>Customer Records</span>
-            <strong>
-              {fmtNumber(quality.total_orders)}
-            </strong>
-            <small>Order-linked customer records</small>
+
+      <div className="metric-grid">
+
+        <div className="card metric-card">
+          <div className="metric-card-top">
+            <div>
+              <div className="metric-label">
+                Active Customers
+              </div>
+
+              <div className="metric-value">
+                {
+                  formatNumber(
+                    summary.active_customers
+                  )
+                }
+              </div>
+            </div>
+
+            <div className="metric-icon">
+              <Users size={20} />
+            </div>
           </div>
         </div>
 
-        <div className="card customer-kpi">
-          <div className="customer-kpi-icon green">
-            <UserRound size={18} />
-          </div>
-          <div>
-            <span>Unique Customer IDs</span>
-            <strong>
-              {fmtNumber(
-                quality.unique_customer_ids
-              )}
-            </strong>
-            <small>IDs available in current dataset</small>
+
+        <div className="card metric-card">
+          <div className="metric-card-top">
+            <div>
+              <div className="metric-label">
+                New Customers
+              </div>
+
+              <div className="metric-value">
+                {
+                  formatNumber(
+                    summary.new_customers
+                  )
+                }
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="card customer-kpi">
-          <div className="customer-kpi-icon purple">
-            <Database size={18} />
-          </div>
-          <div>
-            <span>ID Coverage</span>
-            <strong>
-              {fmtPct(
-                quality.customer_id_coverage_percent
-              )}
-            </strong>
-            <small>Records with customer ID</small>
+
+        <div className="card metric-card">
+          <div className="metric-card-top">
+            <div>
+              <div className="metric-label">
+                Repeat Customers
+              </div>
+
+              <div className="metric-value">
+                {
+                  formatNumber(
+                    summary.repeat_customers
+                  )
+                }
+              </div>
+            </div>
+
+            <div className="metric-icon">
+              <Repeat2 size={20} />
+            </div>
           </div>
         </div>
 
-        <div className="card customer-kpi">
-          <div className="customer-kpi-icon red">
-            <KeyRound size={18} />
+
+        <div className="card metric-card">
+          <div className="metric-card-top">
+            <div>
+              <div className="metric-label">
+                Repeat Rate
+              </div>
+
+              <div className="metric-value">
+                {
+                  summary
+                    .repeat_customer_rate_percent
+                    .toFixed(2)
+                }%
+              </div>
+            </div>
           </div>
-          <div>
-            <span>Persistent ID</span>
-            <strong>
-              {
-                quality
-                  .persistent_customer_identifier_available
-                  ? 'Available'
-                  : 'Missing'
-              }
-            </strong>
-            <small>Required for true retention</small>
+        </div>
+
+
+        <div className="card metric-card">
+          <div className="metric-card-top">
+            <div>
+              <div className="metric-label">
+                Orders / Customer
+              </div>
+
+              <div className="metric-value">
+                {
+                  summary
+                    .orders_per_customer
+                    .toFixed(2)
+                }
+              </div>
+            </div>
+
+            <div className="metric-icon">
+              <ShoppingCart size={20} />
+            </div>
           </div>
+        </div>
+
+
+        <div className="card metric-card">
+          <div className="metric-card-top">
+            <div>
+              <div className="metric-label">
+                COD Share
+              </div>
+
+              <div className="metric-value">
+                {
+                  summary
+                    .cod_share_percent
+                    .toFixed(2)
+                }%
+              </div>
+            </div>
+
+            <div className="metric-icon">
+              <WalletCards size={20} />
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+
+      <div className="metric-grid">
+
+        <div className="card metric-card">
+          <div className="metric-label">
+            RTO Rate
+          </div>
+
+          <div className="metric-value">
+            {
+              summary
+                .rto_rate_percent
+                .toFixed(2)
+            }%
+          </div>
+
+          <div className="metric-subtitle">
+            {
+              formatNumber(
+                summary.rto_orders
+              )
+            } RTO orders
+          </div>
+        </div>
+
+
+        <div className="card metric-card">
+          <div className="metric-label">
+            Return Rate
+          </div>
+
+          <div className="metric-value">
+            {
+              summary
+                .return_rate_percent
+                .toFixed(2)
+            }%
+          </div>
+
+          <div className="metric-subtitle">
+            {
+              formatNumber(
+                summary.returned_orders
+              )
+            } returned orders
+          </div>
+
+          <RotateCcw size={18} />
+        </div>
+
+      </div>
+
+
+      <div className="section-heading">
+        <div>
+          <h2>
+            Acquisition Channel Quality
+          </h2>
+
+          <p>
+            Customer volume and placed-order
+            behaviour by acquisition channel.
+          </p>
         </div>
       </div>
 
-      <div className="two-col">
-        <div className="card">
-          <div className="card-title">
-            Available Customer Analysis
-          </div>
-
-          <div className="metric-list">
-            <div>
-              <span>Customer records</span>
-              <strong>
-                {fmtNumber(
-                  customerSummary.customer_records
-                )}
-              </strong>
-            </div>
-
-            <div>
-              <span>Avg orders per customer ID</span>
-              <strong>
-                {
-                  customerSummary
-                    .average_orders_per_customer_id
-                  ?? 'N/A'
-                }
-              </strong>
-            </div>
-
-            <div>
-              <span>Max orders for one customer ID</span>
-              <strong>
-                {fmtNumber(
-                  customerSummary
-                    .maximum_orders_for_single_customer_id
-                )}
-              </strong>
-            </div>
-
-            <div>
-              <span>Missing customer IDs</span>
-              <strong>
-                {fmtNumber(
-                  quality.missing_customer_ids
-                )}
-              </strong>
-            </div>
-          </div>
-
-          <div className="notice warning">
-            {
-              customerSummary
-                .interpretation_warning
-              || (
-                'Current customer IDs should not be '
-                + 'interpreted as persistent customer '
-                + 'identities across multiple purchases.'
-              )
-            }
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-title">
-            Next Data Requirement
-          </div>
-
-          <div className="customer-next-data">
-            <div className="customer-next-icon">
-              <KeyRound size={20} />
-            </div>
-
-            <div>
-              <span>Required dataset</span>
-              <strong>
-                {
-                  nextRequirement.dataset
-                  || 'Customer master data'
-                }
-              </strong>
-            </div>
-          </div>
-
-          <div className="customer-next-data">
-            <div className="customer-next-icon">
-              <Database size={20} />
-            </div>
-
-            <div>
-              <span>Critical field</span>
-              <strong className="mono">
-                {
-                  nextRequirement.critical_field
-                  || 'customer_unique_id'
-                }
-              </strong>
-            </div>
-          </div>
-
-          <div className="notice info">
-            {
-              nextRequirement.reason
-              || (
-                'A persistent customer identifier is '
-                + 'needed to connect multiple orders '
-                + 'to the same underlying customer.'
-              )
-            }
-          </div>
-        </div>
-      </div>
 
       <div className="card">
-        <div className="customer-card-header">
-          <div>
-            <div className="card-title">
-              Metrics Waiting for More Data
-            </div>
-            <p>
-              ProfitLens explicitly marks these metrics
-              unavailable rather than estimating them
-              from incomplete data.
-            </p>
-          </div>
+        <div className="table-wrap">
+          <table className="data-table">
 
-          <span className="badge amber">
-            {unavailableMetrics.length} unavailable
-          </span>
-        </div>
+            <thead>
+              <tr>
+                <th>Channel</th>
+                <th>Customers</th>
+                <th>Orders</th>
+                <th>Order Value</th>
+                <th>AOV</th>
+                <th>Orders / Customer</th>
+                <th>RTO</th>
+                <th>Returns</th>
+              </tr>
+            </thead>
 
-        <div className="customer-unavailable-grid">
-          {unavailableMetrics.map(
-            ([key, metric]) => {
-              const item =
-                metric as {
-                  metric?: string
-                  status?: string
-                  value?: unknown
-                  reason?: string
-                  required_data?: string[]
-                }
-
-              const icon =
-                key === 'repeat_purchase'
-                  ? <Repeat2 size={18} />
-                  : key === 'ltv'
-                    ? <WalletCards size={18} />
-                    : <AlertTriangle size={18} />
-
-              return (
-                <div
-                  className="customer-unavailable-item"
-                  key={key}
-                >
-                  <div className="customer-unavailable-top">
-                    <div className="customer-unavailable-icon">
-                      {icon}
-                    </div>
-
-                    <div>
-                      <strong>
-                        {humanizeMetric(
-                          item.metric || key
-                        )}
-                      </strong>
-
-                      <span>
-                        {humanizeMetric(
-                          item.status || 'unavailable'
-                        )}
-                      </span>
-                    </div>
-                  </div>
-
-                  <p>
-                    {
-                      item.reason
-                      || 'Additional customer data is required.'
-                    }
-                  </p>
-
-                  {
-                    item.required_data
-                    && item.required_data.length > 0
-                    && (
-                      <div className="required-data-list">
-                        <span>Required data</span>
-                        <div>
+            <tbody>
+              {
+                channels.map(
+                  (
+                    row
+                  ) => (
+                    <tr
+                      key={
+                        row.acquisition_channel
+                      }
+                    >
+                      <td>
+                        <strong>
                           {
-                            item.required_data.map(
-                              (field) => (
-                                <code key={field}>
-                                  {field}
-                                </code>
-                              )
-                            )
+                            row.acquisition_channel
                           }
-                        </div>
-                      </div>
-                    )
-                  }
-                </div>
-              )
-            }
-          )}
+                        </strong>
+                      </td>
+
+                      <td>
+                        {
+                          formatNumber(
+                            row.customers
+                          )
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          formatNumber(
+                            row.orders
+                          )
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          formatCurrency(
+                            row.order_value
+                          )
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          formatCurrency(
+                            row.average_order_value
+                          )
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .orders_per_customer
+                            .toFixed(2)
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .rto_rate_percent
+                            .toFixed(2)
+                        }%
+                      </td>
+
+                      <td>
+                        {
+                          row
+                            .return_rate_percent
+                            .toFixed(2)
+                        }%
+                      </td>
+                    </tr>
+                  )
+                )
+              }
+            </tbody>
+
+          </table>
         </div>
       </div>
 
-      <div className="customer-principle">
-        <CheckCircle2 size={18} />
+
+      <div className="section-heading">
+        <div>
+          <h2>
+            Cohort Retention
+          </h2>
+
+          <p>
+            Observed retention for customers
+            first acquired in {month}.
+          </p>
+        </div>
+      </div>
+
+
+      <div className="card">
+        {
+          selectedMonthCohorts.length > 0
+            ? (
+              <div className="table-wrap">
+                <table className="data-table">
+
+                  <thead>
+                    <tr>
+                      <th>
+                        Months Since First Order
+                      </th>
+
+                      <th>
+                        Cohort Size
+                      </th>
+
+                      <th>
+                        Active Customers
+                      </th>
+
+                      <th>
+                        Retention
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {
+                      selectedMonthCohorts.map(
+                        (
+                          row
+                        ) => (
+                          <tr
+                            key={
+                              row
+                                .months_since_first_order
+                            }
+                          >
+                            <td>
+                              {
+                                row
+                                  .months_since_first_order
+                              }
+                            </td>
+
+                            <td>
+                              {
+                                formatNumber(
+                                  row.cohort_size
+                                )
+                              }
+                            </td>
+
+                            <td>
+                              {
+                                formatNumber(
+                                  row.active_customers
+                                )
+                              }
+                            </td>
+
+                            <td>
+                              {
+                                row
+                                  .retention_percent
+                                  .toFixed(2)
+                              }%
+                            </td>
+                          </tr>
+                        )
+                      )
+                    }
+                  </tbody>
+
+                </table>
+              </div>
+            )
+            : (
+              <div className="empty-state">
+                No later retention periods
+                are observable for this cohort yet.
+              </div>
+            )
+        }
+      </div>
+
+
+      <div className="card limitation-card">
+        <strong>
+          Customer metric scope
+        </strong>
+
         <p>
-          ProfitLens principle: an unavailable metric is
-          better than a fabricated metric. Retention, CAC,
-          LTV and repeat purchase will only appear once the
-          underlying data supports those calculations.
+          Acquisition-channel order value represents
+          placed-order economics, not realized revenue.
+          Cohort retention is observed historical
+          behaviour and is not predictive LTV or churn.
         </p>
       </div>
+
     </div>
   )
 }

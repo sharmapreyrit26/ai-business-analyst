@@ -1,0 +1,21 @@
+file,field,description
+products.csv,sku_id,Unique synthetic product identifier
+products.csv,cogs_per_unit,Unit COGS
+customers.csv,customer_id,Customer identifier
+customers.csv,acquisition_channel,Original acquisition channel
+orders.csv,order_id,Primary order key
+orders.csv,customer_id,FK to customers
+orders.csv,order_value,Net item revenue + shipping
+orders.csv,is_cod,COD indicator
+orders.csv,is_rto,RTO indicator
+orders.csv,is_returned,Return indicator
+orders.csv,ndr_flag,NDR indicator
+order_items.csv,order_id,FK to orders
+order_items.csv,sku_id,FK to products
+order_items.csv,cogs,Line-level COGS
+payments.csv,order_id,FK to orders
+payments.csv,payment_fee,Prepaid payment fee
+payments.csv,cod_fee,COD fee
+payments.csv,refund_amount,Refund amount
+marketing.csv,attributed_revenue,Synthetic attributed revenue
+inventory.csv,reorder_point,Inventory replenishment threshold

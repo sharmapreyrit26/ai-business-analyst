@@ -41,3 +41,10 @@ Thumbs.db
 
 # Local datasets
 data/raw/*.csv
+# ProfitLens local development artifacts
+*.tsbuildinfo
+*.before_*
+legacy_reference_audit.txt
+frontend/=
+data/demo_india_d2c/*_backup/
+data/demo_india_d2c/d2c_data_audit*_report.txt

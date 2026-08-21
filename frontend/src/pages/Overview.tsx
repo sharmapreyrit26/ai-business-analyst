@@ -1,397 +1,896 @@
 import {
   useEffect,
-  useMemo,
   useState,
 } from 'react'
 
 import {
   AlertTriangle,
+  ArrowDownRight,
+  ArrowUpRight,
   Boxes,
-  IndianRupee,
+  CircleDollarSign,
   PackageCheck,
-  ReceiptIndianRupee,
+  Repeat2,
+  RotateCcw,
   ShoppingCart,
+  Target,
   Truck,
+  Users,
+  WalletCards,
 } from 'lucide-react'
 
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts'
+  api,
+} from '../api/profitlens'
 
-import { api } from '../api/profitlens'
-import { ErrorState, LoadingState } from '../components/PageState'
-import { KpiCard } from '../components/KpiCard'
-import { SectionTitle } from '../components/SectionTitle'
-import type { DashboardResponse } from '../types/api'
-import {
-  fmtMoney,
-  fmtNumber,
-  fmtPct,
-  humanizeMetric,
-} from '../utils'
+import type {
+  D2COverviewResponse,
+} from '../types/api'
+
 
 type OverviewProps = {
   month: string
 }
 
+
+function formatCurrency(
+  value: number
+) {
+  return new Intl.NumberFormat(
+    'en-IN',
+    {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0,
+    }
+  ).format(
+    value
+  )
+}
+
+
+function formatNumber(
+  value: number
+) {
+  return new Intl.NumberFormat(
+    'en-IN'
+  ).format(
+    value
+  )
+}
+
+
+function GrowthIndicator({
+  value,
+}: {
+  value: number
+}) {
+  const positive =
+    value >= 0
+
+  return (
+    <span
+      className={
+        positive
+          ? 'metric-growth positive'
+          : 'metric-growth negative'
+      }
+    >
+      {
+        positive
+          ? (
+              <ArrowUpRight
+                size={14}
+              />
+            )
+          : (
+              <ArrowDownRight
+                size={14}
+              />
+            )
+      }
+
+      {Math.abs(value).toFixed(2)}%
+    </span>
+  )
+}
+
+
+function MetricCard({
+  title,
+  value,
+  subtitle,
+  icon,
+  growth,
+}: {
+  title: string
+  value: string
+  subtitle?: string
+  icon?: React.ReactNode
+  growth?: number
+}) {
+  return (
+    <div className="card metric-card">
+      <div className="metric-card-top">
+        <div>
+          <div className="metric-label">
+            {title}
+          </div>
+
+          <div className="metric-value">
+            {value}
+          </div>
+        </div>
+
+        {
+          icon
+          && (
+            <div className="metric-icon">
+              {icon}
+            </div>
+          )
+        }
+      </div>
+
+      <div className="metric-footer">
+        {
+          growth !== undefined
+          && (
+            <GrowthIndicator
+              value={growth}
+            />
+          )
+        }
+
+        {
+          subtitle
+          && (
+            <span className="metric-subtitle">
+              {subtitle}
+            </span>
+          )
+        }
+      </div>
+    </div>
+  )
+}
+
+
+function SectionTitle({
+  title,
+  description,
+}: {
+  title: string
+  description?: string
+}) {
+  return (
+    <div className="section-heading">
+      <div>
+        <h2>
+          {title}
+        </h2>
+
+        {
+          description
+          && (
+            <p>
+              {description}
+            </p>
+          )
+        }
+      </div>
+    </div>
+  )
+}
+
+
 export default function Overview({
   month,
 }: OverviewProps) {
-  const [data, setData] =
-    useState<DashboardResponse | null>(null)
+  const [
+    data,
+    setData,
+  ] = useState<
+    D2COverviewResponse | null
+  >(null)
 
-  const [error, setError] =
-    useState('')
+  const [
+    loading,
+    setLoading,
+  ] = useState(true)
 
-  useEffect(() => {
-    let active = true
-
-    setData(null)
-    setError('')
-
-    api.dashboard(month)
-      .then((result) => {
-        if (active) {
-          setData(result)
-        }
-      })
-      .catch((err) => {
-        if (!active) return
-
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Unable to load the ProfitLens dashboard.'
-        )
-      })
-
-    return () => {
-      active = false
-    }
-  }, [month])
-
-  const chartData = useMemo(() => {
-    if (!data) return []
-
-    return data.monthly_revenue
-      .map((row) => ({
-        month: String(row.month || ''),
-        revenue: Number(row.revenue || 0),
-        orders: Number(row.orders || 0),
-      }))
-  }, [data])
-
-  if (error) return <ErrorState error={error} />
-  if (!data) return <LoadingState />
-
-  const kpi = data.kpis
-
-  const dataQuality = String(
-    kpi.data_quality?.status || 'available'
+  const [
+    error,
+    setError,
+  ] = useState<string | null>(
+    null
   )
 
-  const revenueGrowth =
-    kpi.revenue.growth_percent
+  useEffect(
+    () => {
+      let cancelled = false
 
-  const orderGrowth =
-    kpi.orders.growth_percent
+      setLoading(true)
+      setError(null)
 
-  const deliveryRate =
-    kpi.delivery.rate_percent
+      api.overview(
+        month
+      )
+        .then(
+          (
+            response
+          ) => {
+            if (!cancelled) {
+              setData(
+                response
+              )
+            }
+          }
+        )
+        .catch(
+          (
+            requestError
+          ) => {
+            if (!cancelled) {
+              setData(null)
 
-  const cancellationRate =
-    kpi.cancellation.rate_percent
+              setError(
+                requestError
+                  instanceof Error
+                  ? requestError.message
+                  : 'Could not load ProfitLens overview.'
+              )
+            }
+          }
+        )
+        .finally(
+          () => {
+            if (!cancelled) {
+              setLoading(false)
+            }
+          }
+        )
 
-  const businessStatus =
-    (
-      (revenueGrowth ?? 0) < 0
-      || (orderGrowth ?? 0) < 0
+      return () => {
+        cancelled = true
+      }
+    },
+    [
+      month,
+    ]
+  )
+
+  if (loading) {
+    return (
+      <div className="page">
+        <div className="card">
+          <div className="loading-state">
+            Loading ProfitLens overview...
+          </div>
+        </div>
+      </div>
     )
-      ? 'Needs attention'
-      : 'Healthy'
+  }
+
+  if (
+    error
+    || !data
+  ) {
+    return (
+      <div className="page">
+        <div className="card error-card">
+          <AlertTriangle
+            size={20}
+          />
+
+          <div>
+            <strong>
+              Could not load data
+            </strong>
+
+            <p>
+              {
+                error
+                || 'Unknown error'
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const {
+    revenue,
+    profitability,
+    marketing,
+    customers,
+    logistics,
+    products,
+    inventory,
+    reporting,
+  } = data
 
   return (
     <div className="page">
+
+      {/* =====================================================
+          PAGE HEADER
+      ===================================================== */}
+
+      <div className="page-header">
+        <div>
+          <div className="eyebrow">
+            Executive overview
+          </div>
+
+          <h2>
+            Business Performance
+          </h2>
+
+          <p>
+            Financial, customer, logistics,
+            marketing and inventory performance
+            for {month}.
+          </p>
+        </div>
+
+        <div className="overview-period-badge">
+          {month}
+        </div>
+      </div>
+
+
+      {/* =====================================================
+          PRIMARY KPIs
+      ===================================================== */}
+
       <SectionTitle
-        title="Business Overview"
-        subtitle={
-          `Management snapshot for ${month}. `
-          + 'Every displayed metric is calculated by the ProfitLens backend.'
+        title="Business Health"
+        description={
+          'Core revenue and profitability metrics.'
         }
       />
 
-      <div className="overview-status-row">
-        <div
-          className={
-            `overview-health ${
-              businessStatus === 'Healthy'
-                ? 'healthy'
-                : 'attention'
-            }`
+      <div className="metric-grid">
+        <MetricCard
+          title="Realized Revenue"
+          value={
+            formatCurrency(
+              revenue.realized_revenue
+            )
           }
-        >
-          <div className="overview-health-icon">
-            {
-              businessStatus === 'Healthy'
-                ? <PackageCheck size={18} />
-                : <AlertTriangle size={18} />
-            }
-          </div>
-
-          <div>
-            <span>Business status</span>
-            <strong>{businessStatus}</strong>
-          </div>
-        </div>
-
-        <div className="overview-period">
-          <span>Reporting period</span>
-          <strong>{month}</strong>
-        </div>
-
-        <div className="overview-period">
-          <span>Data quality</span>
-          <strong>
-            {humanizeMetric(dataQuality)}
-          </strong>
-        </div>
-      </div>
-
-      <div className="kpi-grid">
-        <KpiCard
-          label="Revenue"
-          value={fmtMoney(kpi.revenue.value)}
-          change={kpi.revenue.growth_percent}
-          note="vs previous month"
-          icon={<IndianRupee size={17} />}
-        />
-
-        <KpiCard
-          label="Orders"
-          value={fmtNumber(kpi.orders.value)}
-          change={kpi.orders.growth_percent}
-          note="vs previous month"
-          icon={<ShoppingCart size={17} />}
-        />
-
-        <KpiCard
-          label="Average Order Value"
-          value={fmtMoney(kpi.aov.value)}
-          change={kpi.aov.growth_percent}
-          note="vs previous month"
-          icon={<ReceiptIndianRupee size={17} />}
-        />
-
-        <KpiCard
-          label="Delivery Rate"
-          value={fmtPct(deliveryRate)}
-          note={
-            `${fmtNumber(
-              kpi.delivery.delivered_orders
-            )} delivered`
+          growth={
+            revenue.revenue_growth_percent
           }
-          icon={<PackageCheck size={17} />}
+          subtitle="vs previous month"
+          icon={
+            <CircleDollarSign
+              size={20}
+            />
+          }
+        />
+
+        <MetricCard
+          title="Orders"
+          value={
+            formatNumber(
+              revenue.orders
+            )
+          }
+          growth={
+            revenue.order_growth_percent
+          }
+          subtitle="placed orders"
+          icon={
+            <ShoppingCart
+              size={20}
+            />
+          }
+        />
+
+        <MetricCard
+          title="AOV"
+          value={
+            formatCurrency(
+              revenue.aov
+            )
+          }
+          subtitle="realized revenue / orders"
+          icon={
+            <WalletCards
+              size={20}
+            />
+          }
+        />
+
+        <MetricCard
+          title="Contribution Profit"
+          value={
+            formatCurrency(
+              profitability
+                .contribution_profit_after_marketing
+            )
+          }
+          growth={
+            profitability
+              .profit_after_marketing_growth_percent
+          }
+          subtitle="after marketing"
+          icon={
+            <Target
+              size={20}
+            />
+          }
+        />
+
+        <MetricCard
+          title="Contribution Margin"
+          value={
+            `${profitability
+              .contribution_margin_after_marketing_percent
+              .toFixed(2)}%`
+          }
+          subtitle="after marketing"
+        />
+
+        <MetricCard
+          title="Gross Margin"
+          value={
+            `${profitability
+              .gross_margin_percent
+              .toFixed(2)}%`
+          }
+          subtitle={
+            formatCurrency(
+              profitability.gross_profit
+            )
+          }
         />
       </div>
 
-      <div className="overview-secondary-grid">
-        <div className="card overview-mini-card">
-          <div className="overview-mini-icon red">
-            <AlertTriangle size={16} />
-          </div>
 
-          <div>
-            <span>Cancellation Rate</span>
-            <strong>{fmtPct(cancellationRate)}</strong>
-            <small>
-              {fmtNumber(
-                kpi.cancellation.cancelled_orders
-              )} cancelled orders
-            </small>
-          </div>
-        </div>
+      {/* =====================================================
+          CUSTOMER + MARKETING
+      ===================================================== */}
 
-        <div className="card overview-mini-card">
-          <div className="overview-mini-icon blue">
-            <Truck size={16} />
-          </div>
+      <SectionTitle
+        title="Growth & Customers"
+        description={
+          'Acquisition efficiency and customer quality.'
+        }
+      />
 
-          <div>
-            <span>Freight Value</span>
-            <strong>
-              {fmtMoney(kpi.freight.value)}
-            </strong>
-            <small>Total freight in period</small>
-          </div>
-        </div>
+      <div className="metric-grid">
+        <MetricCard
+          title="Active Customers"
+          value={
+            formatNumber(
+              customers.active_customers
+            )
+          }
+          subtitle={
+            `${formatNumber(
+              customers.new_customers
+            )} new`
+          }
+          icon={
+            <Users
+              size={20}
+            />
+          }
+        />
 
-        <div className="card overview-mini-card">
-          <div className="overview-mini-icon green">
-            <Boxes size={16} />
-          </div>
+        <MetricCard
+          title="Repeat Customer Rate"
+          value={
+            `${customers
+              .repeat_customer_rate_percent
+              .toFixed(2)}%`
+          }
+          subtitle={
+            `${formatNumber(
+              customers.repeat_customers
+            )} repeat customers`
+          }
+          icon={
+            <Repeat2
+              size={20}
+            />
+          }
+        />
 
-          <div>
-            <span>Items Sold</span>
-            <strong>
-              {fmtNumber(kpi.items.value)}
-            </strong>
-            <small>Item-level volume</small>
-          </div>
-        </div>
+        <MetricCard
+          title="ROAS"
+          value={
+            `${marketing
+              .roas
+              .toFixed(2)}x`
+          }
+          subtitle="attributed marketing ROAS"
+          icon={
+            <Target
+              size={20}
+            />
+          }
+        />
 
-        <div className="card overview-mini-card">
-          <div className="overview-mini-icon amber">
-            <ShoppingCart size={16} />
-          </div>
+        <MetricCard
+          title="CAC"
+          value={
+            formatCurrency(
+              marketing.cac
+            )
+          }
+          subtitle={
+            `${formatNumber(
+              marketing.new_customers
+            )} attributed new customers`
+          }
+        />
 
-          <div>
-            <span>Delivered Orders</span>
-            <strong>
-              {fmtNumber(
-                kpi.delivery.delivered_orders
-              )}
-            </strong>
-            <small>Successfully delivered</small>
-          </div>
-        </div>
+        <MetricCard
+          title="Marketing Spend"
+          value={
+            formatCurrency(
+              marketing.marketing_spend
+            )
+          }
+          subtitle={
+            `${marketing
+              .marketing_spend_percent_of_revenue
+              .toFixed(2)}% of revenue`
+          }
+        />
+
+        <MetricCard
+          title="Attributed Revenue"
+          value={
+            formatCurrency(
+              marketing.attributed_revenue
+            )
+          }
+          subtitle={
+            `${formatNumber(
+              marketing.attributed_orders
+            )} attributed orders`
+          }
+        />
       </div>
 
-      <div className="two-col">
-        <div className="card chart-card">
-          <div className="overview-card-header">
-            <div>
-              <div className="card-title">
-                Monthly Revenue Trend
-              </div>
 
-              <p>
-                Historical revenue movement across
-                available reporting periods.
-              </p>
-            </div>
+      {/* =====================================================
+          LOGISTICS
+      ===================================================== */}
 
-            <span className="badge blue">
-              Revenue
+      <SectionTitle
+        title="Logistics Health"
+        description={
+          'Delivery performance, RTO and NDR risk.'
+        }
+      />
+
+      <div className="metric-grid">
+        <MetricCard
+          title="Delivery Rate"
+          value={
+            `${logistics
+              .delivery_rate_percent
+              .toFixed(2)}%`
+          }
+          icon={
+            <PackageCheck
+              size={20}
+            />
+          }
+        />
+
+        <MetricCard
+          title="RTO Rate"
+          value={
+            `${logistics
+              .rto_rate_percent
+              .toFixed(2)}%`
+          }
+          subtitle={
+            `${formatNumber(
+              logistics.rto_orders
+            )} RTO orders`
+          }
+          icon={
+            <RotateCcw
+              size={20}
+            />
+          }
+        />
+
+        <MetricCard
+          title="NDR Rate"
+          value={
+            `${logistics
+              .ndr_rate_percent
+              .toFixed(2)}%`
+          }
+          subtitle="non-delivery risk"
+          icon={
+            <AlertTriangle
+              size={20}
+            />
+          }
+        />
+
+        <MetricCard
+          title="On-Time Delivery"
+          value={
+            `${logistics
+              .on_time_delivery_percent
+              .toFixed(2)}%`
+          }
+          icon={
+            <Truck
+              size={20}
+            />
+          }
+        />
+
+        <MetricCard
+          title="Average Delivery TAT"
+          value={
+            `${logistics
+              .average_delivery_tat_days
+              .toFixed(2)} days`
+          }
+        />
+
+        <MetricCard
+          title="P90 Delivery TAT"
+          value={
+            `${logistics
+              .p90_delivery_tat_days
+              .toFixed(2)} days`
+          }
+        />
+      </div>
+
+
+      {/* =====================================================
+          PRODUCTS + INVENTORY
+      ===================================================== */}
+
+      <SectionTitle
+        title="Products & Inventory"
+        description={
+          'Product concentration and working-capital risk.'
+        }
+      />
+
+      <div className="metric-grid">
+        <MetricCard
+          title="Products"
+          value={
+            formatNumber(
+              products.total_products
+            )
+          }
+          subtitle={
+            `${products.loss_making_products} loss-making`
+          }
+        />
+
+        <MetricCard
+          title="Top 10 Revenue Share"
+          value={
+            `${products
+              .top_10_revenue_share_percent
+              .toFixed(2)}%`
+          }
+          subtitle="product concentration"
+        />
+
+        <MetricCard
+          title="Inventory at Cost"
+          value={
+            formatCurrency(
+              inventory.inventory_cost_value
+            )
+          }
+          subtitle={
+            `${formatNumber(
+              inventory.total_closing_stock_units
+            )} units`
+          }
+          icon={
+            <Boxes
+              size={20}
+            />
+          }
+        />
+
+        <MetricCard
+          title="Below Reorder"
+          value={
+            formatNumber(
+              inventory.below_reorder_rows
+            )
+          }
+          subtitle="SKU × warehouse positions"
+        />
+
+        <MetricCard
+          title="Revenue at Risk"
+          value={
+            formatCurrency(
+              inventory
+                .potential_revenue_at_risk
+            )
+          }
+          subtitle="reorder-gap estimate"
+          icon={
+            <AlertTriangle
+              size={20}
+            />
+          }
+        />
+
+        <MetricCard
+          title="Trapped Inventory"
+          value={
+            formatCurrency(
+              inventory
+                .estimated_trapped_inventory_cost
+            )
+          }
+          subtitle="estimated excess stock at cost"
+        />
+      </div>
+
+
+      {/* =====================================================
+          PROFIT WATERFALL
+      ===================================================== */}
+
+      <SectionTitle
+        title="Profitability Waterfall"
+        description={
+          'How revenue translates into contribution profit.'
+        }
+      />
+
+      <div className="card">
+        <div className="waterfall-list">
+
+          <div className="waterfall-row">
+            <span>
+              Gross Product Revenue
             </span>
+
+            <strong>
+              {
+                formatCurrency(
+                  revenue
+                    .gross_product_revenue
+                )
+              }
+            </strong>
           </div>
 
-          <ResponsiveContainer
-            width="100%"
-            height={320}
-          >
-            <AreaChart data={chartData}>
-              <CartesianGrid
-                stroke="#1E3A5F"
-                vertical={false}
-              />
+          <div className="waterfall-row">
+            <span>
+              Net Product Revenue
+            </span>
 
-              <XAxis
-                dataKey="month"
-                stroke="#64748B"
-                tick={{ fontSize: 11 }}
-              />
-
-              <YAxis
-                stroke="#64748B"
-                tick={{ fontSize: 11 }}
-                tickFormatter={(value) =>
-                  `${Math.round(
-                    value / 1000
-                  )}k`
-                }
-              />
-
-              <Tooltip
-                contentStyle={{
-                  background: '#162843',
-                  border: '1px solid #1E3A5F',
-                  borderRadius: 10,
-                }}
-                formatter={(value) =>
-                  fmtMoney(Number(value))
-                }
-              />
-
-              <Area
-                type="monotone"
-                dataKey="revenue"
-                stroke="#3B82F6"
-                fill="#3B82F622"
-                strokeWidth={2}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="card">
-          <div className="card-title">
-            Management Snapshot
+            <strong>
+              {
+                formatCurrency(
+                  revenue
+                    .net_product_revenue
+                )
+              }
+            </strong>
           </div>
 
-          <div className="metric-list">
-            <div>
-              <span>Revenue growth</span>
-              <strong
-                className={
-                  (revenueGrowth ?? 0) >= 0
-                    ? 'positive-text'
-                    : 'negative-text'
-                }
-              >
-                {fmtPct(revenueGrowth)}
-              </strong>
-            </div>
+          <div className="waterfall-row">
+            <span>
+              Realized Revenue
+            </span>
 
-            <div>
-              <span>Order growth</span>
-              <strong
-                className={
-                  (orderGrowth ?? 0) >= 0
-                    ? 'positive-text'
-                    : 'negative-text'
-                }
-              >
-                {fmtPct(orderGrowth)}
-              </strong>
-            </div>
-
-            <div>
-              <span>Delivery rate</span>
-              <strong>
-                {fmtPct(deliveryRate)}
-              </strong>
-            </div>
-
-            <div>
-              <span>Cancellation rate</span>
-              <strong>
-                {fmtPct(cancellationRate)}
-              </strong>
-            </div>
-
-            <div>
-              <span>Data quality</span>
-              <strong>
-                {humanizeMetric(dataQuality)}
-              </strong>
-            </div>
+            <strong>
+              {
+                formatCurrency(
+                  revenue
+                    .realized_revenue
+                )
+              }
+            </strong>
           </div>
 
-          <div className="notice info">
-            Profit, contribution margin, CAC, ROAS,
-            RTO and customer LTV are intentionally
-            excluded until the required cost,
-            marketing, payment and logistics datasets
-            are connected.
+          <div className="waterfall-row">
+            <span>
+              Gross Profit
+            </span>
+
+            <strong>
+              {
+                formatCurrency(
+                  profitability
+                    .gross_profit
+                )
+              }
+            </strong>
           </div>
+
+          <div className="waterfall-row">
+            <span>
+              Contribution Before Marketing
+            </span>
+
+            <strong>
+              {
+                formatCurrency(
+                  profitability
+                    .contribution_profit_before_marketing
+                )
+              }
+            </strong>
+          </div>
+
+          <div className="waterfall-row negative-row">
+            <span>
+              Marketing Spend
+            </span>
+
+            <strong>
+              -{
+                formatCurrency(
+                  profitability
+                    .marketing_spend
+                )
+              }
+            </strong>
+          </div>
+
+          <div className="waterfall-row final-row">
+            <span>
+              Contribution After Marketing
+            </span>
+
+            <strong>
+              {
+                formatCurrency(
+                  profitability
+                    .contribution_profit_after_marketing
+                )
+              }
+            </strong>
+          </div>
+
         </div>
       </div>
+
+
+      {/* =====================================================
+          DATA LIMITATIONS
+      ===================================================== */}
+
+      <div className="card limitation-card">
+        <div>
+          <strong>
+            Data scope
+          </strong>
+
+          <p>
+            Marketing attribution is currently
+            {` ${marketing.attribution_level}`}.
+            SKU-level contribution profit is not yet
+            available because order-level variable
+            costs require an allocation methodology.
+            Inventory represents a {
+              reporting.inventory_scope
+            } rather than historical monthly inventory.
+          </p>
+        </div>
+      </div>
+
     </div>
   )
 }

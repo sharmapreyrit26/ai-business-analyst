@@ -3,11 +3,16 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app.routes.analytics import (
-    router as analytics_router,
+from backend.app.routes.d2c import (
+    router as d2c_router,
 )
-from backend.app.routes.dashboard import (
-    router as dashboard_router,
+
+from backend.app.routes.intelligence import (
+    router as intelligence_router,
+)
+
+from backend.app.routes.internal import (
+    router as internal_router,
 )
 
 
@@ -58,10 +63,24 @@ def health():
     }
 
 
+# ============================================================
+# PRODUCTION D2C API
+# ============================================================
+
 app.include_router(
-    analytics_router
+    d2c_router
 )
 
 app.include_router(
-    dashboard_router
+    intelligence_router
 )
+
+
+# ============================================================
+# INTERNAL / DEVELOPMENT API
+# ============================================================
+
+app.include_router(
+    internal_router
+)
+
