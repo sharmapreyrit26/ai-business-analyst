@@ -700,6 +700,23 @@ def zone_performance(
 # ============================================================
 
 
+@router.get("/marketing/monthly-trend")
+def marketing_monthly_trend():
+    """
+    Return monthly marketing performance and MoM changes.
+    """
+
+    try:
+        dataframe = get_monthly_marketing_trend()
+
+        return {
+            "data": _records(dataframe),
+        }
+
+    except Exception as error:
+        _raise_http_error(error)
+
+
 @router.get("/marketing/{month}")
 def marketing_summary(month: str):
     """
@@ -749,21 +766,6 @@ def marketing_campaigns(month: str):
         _raise_http_error(error)
 
 
-@router.get("/marketing/monthly-trend")
-def marketing_monthly_trend():
-    """
-    Return monthly marketing performance and MoM changes.
-    """
-
-    try:
-        dataframe = get_monthly_marketing_trend()
-
-        return {
-            "data": _records(dataframe),
-        }
-
-    except Exception as error:
-        _raise_http_error(error)
 
 
 @router.get("/marketing/insights/{month}")
