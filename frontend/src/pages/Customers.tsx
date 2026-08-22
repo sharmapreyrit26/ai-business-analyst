@@ -6,22 +6,47 @@ import {
 
 import {
   AlertTriangle,
+  ArrowRight,
+  RefreshCcw,
   Repeat2,
   RotateCcw,
   ShoppingCart,
+  Sparkles,
   Users,
   WalletCards,
 } from 'lucide-react'
 
 import {
+  useNavigate,
+} from 'react-router-dom'
+
+import {
   api,
 } from '../api/profitlens'
+
+import {
+  MetricCard,
+} from '../components/metrics/MetricCard'
+
+import {
+  MetricDrilldownDrawer,
+} from '../components/metrics/MetricDrilldownDrawer'
+
+import {
+  useMetricDrilldown,
+} from '../components/metrics/useMetricDrilldown'
 
 import type {
   D2CAcquisitionChannelRow,
   D2CCustomerCohortRow,
   D2CCustomerSummaryResponse,
 } from '../types/api'
+
+import type {
+  MetricContract,
+  MetricSentiment,
+  MetricUnit,
+} from '../types/metric'
 
 
 type CustomersProps = {
@@ -52,53 +77,152 @@ function formatNumber(
 }
 
 
+function buildMetric(
+  input: {
+    metricId: string
+    label: string
+    value: number
+    formattedValue: string
+    unit: MetricUnit
+    higherIsBetter: boolean
+    definition?: string
+  }
+): MetricContract {
+  const sentiment:
+    MetricSentiment =
+      'neutral'
+
+  return {
+    metric_id:
+      input.metricId,
+
+    label:
+      input.label,
+
+    value:
+      input.value,
+
+    formatted_value:
+      input.formattedValue,
+
+    unit:
+      input.unit,
+
+    comparison: {
+      previous_value:
+        null,
+
+      change_absolute:
+        null,
+
+      change_percent:
+        null,
+
+      direction:
+        'unknown',
+    },
+
+    sentiment,
+
+    definition:
+      input.definition
+      ?? null,
+
+    formula:
+      null,
+
+    data_quality:
+      'verified',
+
+    source: {
+      engine:
+        null,
+
+      tables:
+        [],
+
+      fields:
+        [],
+    },
+
+    metadata: {
+      higher_is_better:
+        input.higherIsBetter,
+    },
+  }
+}
+
+
 export default function Customers({
   month,
 }: CustomersProps) {
+  const navigate =
+    useNavigate()
+
+  const drilldown =
+    useMetricDrilldown()
+
   const [
     summary,
     setSummary,
-  ] = useState<D2CCustomerSummaryResponse | null>(
+  ] = useState<
+    D2CCustomerSummaryResponse | null
+  >(
     null
   )
 
   const [
     channels,
     setChannels,
-  ] = useState<D2CAcquisitionChannelRow[]>(
+  ] = useState<
+    D2CAcquisitionChannelRow[]
+  >(
     []
   )
 
   const [
     cohorts,
     setCohorts,
-  ] = useState<D2CCustomerCohortRow[]>(
+  ] = useState<
+    D2CCustomerCohortRow[]
+  >(
     []
   )
 
   const [
     loading,
     setLoading,
-  ] = useState(true)
+  ] = useState(
+    true
+  )
 
   const [
     error,
     setError,
-  ] = useState<string | null>(
+  ] = useState<
+    string | null
+  >(
     null
   )
 
 
   useEffect(
     () => {
-      let cancelled = false
+      let cancelled =
+        false
 
       setLoading(true)
       setError(null)
 
       Promise.all([
-        api.customers(month),
-        api.acquisitionChannels(month),
+        api.customers(
+          month
+        ),
+
+        api.acquisitionChannels(
+          month
+        ),
+
         api.customerCohorts(),
       ])
         .then(
@@ -107,7 +231,9 @@ export default function Customers({
             channelResponse,
             cohortResponse,
           ]) => {
-            if (cancelled) {
+            if (
+              cancelled
+            ) {
               return
             }
 
@@ -125,10 +251,10 @@ export default function Customers({
           }
         )
         .catch(
-          (
-            requestError
-          ) => {
-            if (cancelled) {
+          requestError => {
+            if (
+              cancelled
+            ) {
               return
             }
 
@@ -140,17 +266,25 @@ export default function Customers({
               requestError
                 instanceof Error
                 ? requestError.message
-                : 'Could not load customer analytics.'
+                : (
+                    'Could not load '
+                    + 'customer analytics.'
+                  )
             )
           }
         )
         .finally(
           () => {
-            if (!cancelled) {
-              setLoading(false)
+            if (
+              !cancelled
+            ) {
+              setLoading(
+                false
+              )
             }
           }
         )
+
 
       return () => {
         cancelled = true
@@ -164,15 +298,24 @@ export default function Customers({
 
   const selectedMonthCohorts =
     useMemo(
-      () => {
-        return cohorts.filter(
-          (
-            row
-          ) =>
-            row.cohort_month
-            === month
-        )
-      },
+      () =>
+        cohorts
+          .filter(
+            row =>
+              row.cohort_month
+              === month
+          )
+          .slice()
+          .sort(
+            (
+              first,
+              second,
+            ) =>
+              first
+                .months_since_first_order
+              - second
+                .months_since_first_order
+          ),
       [
         cohorts,
         month,
@@ -180,12 +323,294 @@ export default function Customers({
     )
 
 
-  if (loading) {
+  const metrics =
+    useMemo(
+      () => {
+        if (
+          !summary
+        ) {
+          return []
+        }
+
+        return [
+          buildMetric({
+            metricId:
+              'active_customers',
+
+            label:
+              'Active Customers',
+
+            value:
+              summary
+                .active_customers,
+
+            formattedValue:
+              formatNumber(
+                summary
+                  .active_customers
+              ),
+
+            unit:
+              'count',
+
+            higherIsBetter:
+              true,
+
+            definition:
+              'Customers with activity in the selected reporting period.',
+          }),
+
+          buildMetric({
+            metricId:
+              'repeat_customer_rate_percent',
+
+            label:
+              'Repeat Customer Rate',
+
+            value:
+              summary
+                .repeat_customer_rate_percent,
+
+            formattedValue:
+              `${summary
+                .repeat_customer_rate_percent
+                .toFixed(2)}%`,
+
+            unit:
+              'percent',
+
+            higherIsBetter:
+              true,
+          }),
+
+          buildMetric({
+            metricId:
+              'orders_per_customer',
+
+            label:
+              'Orders Per Customer',
+
+            value:
+              summary
+                .orders_per_customer,
+
+            formattedValue:
+              summary
+                .orders_per_customer
+                .toFixed(2),
+
+            unit:
+              'ratio',
+
+            higherIsBetter:
+              true,
+          }),
+
+          buildMetric({
+            metricId:
+              'rto_rate_percent',
+
+            label:
+              'Customer RTO Rate',
+
+            value:
+              summary
+                .rto_rate_percent,
+
+            formattedValue:
+              `${summary
+                .rto_rate_percent
+                .toFixed(2)}%`,
+
+            unit:
+              'percent',
+
+            higherIsBetter:
+              false,
+          }),
+
+          buildMetric({
+            metricId:
+              'return_rate_percent',
+
+            label:
+              'Return Rate',
+
+            value:
+              summary
+                .return_rate_percent,
+
+            formattedValue:
+              `${summary
+                .return_rate_percent
+                .toFixed(2)}%`,
+
+            unit:
+              'percent',
+
+            higherIsBetter:
+              false,
+          }),
+
+          buildMetric({
+            metricId:
+              'cod_share_percent',
+
+            label:
+              'COD Share',
+
+            value:
+              summary
+                .cod_share_percent,
+
+            formattedValue:
+              `${summary
+                .cod_share_percent
+                .toFixed(2)}%`,
+
+            unit:
+              'percent',
+
+            higherIsBetter:
+              false,
+          }),
+        ]
+      },
+      [
+        summary,
+      ]
+    )
+
+
+  const topAcquisitionChannels =
+    useMemo(
+      () =>
+        channels
+          .slice()
+          .sort(
+            (
+              first,
+              second,
+            ) =>
+              second.customers
+              - first.customers
+          )
+          .slice(
+            0,
+            5
+          ),
+      [
+        channels,
+      ]
+    )
+
+
+  const bestQualityChannels =
+    useMemo(
+      () =>
+        channels
+          .slice()
+          .sort(
+            (
+              first,
+              second,
+            ) => {
+              if (
+                first.rto_rate_percent
+                !== second.rto_rate_percent
+              ) {
+                return (
+                  first.rto_rate_percent
+                  - second.rto_rate_percent
+                )
+              }
+
+              return (
+                first.return_rate_percent
+                - second.return_rate_percent
+              )
+            }
+          )
+          .slice(
+            0,
+            4
+          ),
+      [
+        channels,
+      ]
+    )
+
+
+  const riskiestChannels =
+    useMemo(
+      () =>
+        channels
+          .slice()
+          .sort(
+            (
+              first,
+              second,
+            ) =>
+              (
+                second.rto_rate_percent
+                + second.return_rate_percent
+              )
+              - (
+                  first.rto_rate_percent
+                  + first.return_rate_percent
+                )
+          )
+          .slice(
+            0,
+            4
+          ),
+      [
+        channels,
+      ]
+    )
+
+
+  function openMetric(
+    selected:
+      MetricContract
+  ) {
+    if (
+      selected.value
+      === null
+      || selected.value
+      === undefined
+    ) {
+      return
+    }
+
+    void drilldown.openMetric({
+      metricId:
+        selected.metric_id,
+
+      value:
+        Number(
+          selected.value
+        ),
+    })
+  }
+
+
+  if (
+    loading
+  ) {
     return (
-      <div className="page">
-        <div className="card">
+      <div className="pl-customers-v2">
+
+        <div className="pl-page-state">
+
+          <RefreshCcw
+            size={20}
+          />
+
           Loading customer analytics...
+
         </div>
+
       </div>
     )
   }
@@ -196,281 +621,682 @@ export default function Customers({
     || !summary
   ) {
     return (
-      <div className="page">
-        <div className="card error-card">
-          <AlertTriangle size={20} />
+      <div className="pl-customers-v2">
+
+        <div className="pl-page-state error">
+
+          <AlertTriangle
+            size={20}
+          />
 
           <div>
             <strong>
               Could not load customers
             </strong>
 
-            <p>
+            <span>
               {
                 error
-                || 'Unknown error'
+                ?? 'Customer data is unavailable.'
               }
-            </p>
+            </span>
           </div>
+
         </div>
+
       </div>
     )
   }
 
 
   return (
-    <div className="page">
+    <div className="pl-customers-v2">
 
-      <div className="page-header">
+      <section className="pl-business-hero">
+
         <div>
-          <div className="eyebrow">
-            Customer analytics
+
+          <div className="pl-page-eyebrow">
+            Customer intelligence
           </div>
 
-          <h2>
-            Customer Performance
-          </h2>
+          <h1>
+            Customer Analysis
+          </h1>
 
           <p>
-            Acquisition, repeat behaviour,
-            RTO and customer quality for {month}.
+            Understand repeat behaviour,
+            acquisition quality and customer
+            risk for {month}.
           </p>
-        </div>
-      </div>
 
-
-      <div className="metric-grid">
-
-        <div className="card metric-card">
-          <div className="metric-card-top">
-            <div>
-              <div className="metric-label">
-                Active Customers
-              </div>
-
-              <div className="metric-value">
-                {
-                  formatNumber(
-                    summary.active_customers
-                  )
-                }
-              </div>
-            </div>
-
-            <div className="metric-icon">
-              <Users size={20} />
-            </div>
-          </div>
         </div>
 
 
-        <div className="card metric-card">
-          <div className="metric-card-top">
-            <div>
-              <div className="metric-label">
-                New Customers
-              </div>
+        <div className="pl-business-hero-actions">
 
-              <div className="metric-value">
-                {
-                  formatNumber(
-                    summary.new_customers
-                  )
-                }
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        <div className="card metric-card">
-          <div className="metric-card-top">
-            <div>
-              <div className="metric-label">
-                Repeat Customers
-              </div>
-
-              <div className="metric-value">
-                {
-                  formatNumber(
-                    summary.repeat_customers
-                  )
-                }
-              </div>
-            </div>
-
-            <div className="metric-icon">
-              <Repeat2 size={20} />
-            </div>
-          </div>
-        </div>
-
-
-        <div className="card metric-card">
-          <div className="metric-card-top">
-            <div>
-              <div className="metric-label">
-                Repeat Rate
-              </div>
-
-              <div className="metric-value">
-                {
-                  summary
-                    .repeat_customer_rate_percent
-                    .toFixed(2)
-                }%
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        <div className="card metric-card">
-          <div className="metric-card-top">
-            <div>
-              <div className="metric-label">
-                Orders / Customer
-              </div>
-
-              <div className="metric-value">
-                {
-                  summary
-                    .orders_per_customer
-                    .toFixed(2)
-                }
-              </div>
-            </div>
-
-            <div className="metric-icon">
-              <ShoppingCart size={20} />
-            </div>
-          </div>
-        </div>
-
-
-        <div className="card metric-card">
-          <div className="metric-card-top">
-            <div>
-              <div className="metric-label">
-                COD Share
-              </div>
-
-              <div className="metric-value">
-                {
-                  summary
-                    .cod_share_percent
-                    .toFixed(2)
-                }%
-              </div>
-            </div>
-
-            <div className="metric-icon">
-              <WalletCards size={20} />
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-
-      <div className="metric-grid">
-
-        <div className="card metric-card">
-          <div className="metric-label">
-            RTO Rate
-          </div>
-
-          <div className="metric-value">
-            {
-              summary
-                .rto_rate_percent
-                .toFixed(2)
-            }%
-          </div>
-
-          <div className="metric-subtitle">
-            {
-              formatNumber(
-                summary.rto_orders
+          <button
+            type="button"
+            className="pl-secondary-button"
+            onClick={() =>
+              navigate(
+                '/analyst'
               )
-            } RTO orders
-          </div>
-        </div>
+            }
+          >
+            <Sparkles
+              size={14}
+            />
 
+            Ask ProfitLens
+          </button>
 
-        <div className="card metric-card">
-          <div className="metric-label">
-            Return Rate
-          </div>
-
-          <div className="metric-value">
-            {
-              summary
-                .return_rate_percent
-                .toFixed(2)
-            }%
-          </div>
-
-          <div className="metric-subtitle">
-            {
-              formatNumber(
-                summary.returned_orders
+          <button
+            type="button"
+            className="pl-primary-button"
+            onClick={() =>
+              navigate(
+                '/scenario'
               )
-            } returned orders
-          </div>
+            }
+          >
+            Test growth scenario
 
-          <RotateCcw size={18} />
+            <ArrowRight
+              size={14}
+            />
+          </button>
+
         </div>
 
-      </div>
+      </section>
 
 
-      <div className="section-heading">
+      <section className="pl-customer-strip">
+
         <div>
-          <h2>
-            Acquisition Channel Quality
-          </h2>
 
-          <p>
-            Customer volume and placed-order
-            behaviour by acquisition channel.
-          </p>
+          <Users
+            size={17}
+          />
+
+          <span>
+            New Customers
+          </span>
+
+          <strong>
+            {
+              formatNumber(
+                summary
+                  .new_customers
+              )
+            }
+          </strong>
+
         </div>
-      </div>
 
 
-      <div className="card">
+        <div>
+
+          <Repeat2
+            size={17}
+          />
+
+          <span>
+            Repeat Customers
+          </span>
+
+          <strong>
+            {
+              formatNumber(
+                summary
+                  .repeat_customers
+              )
+            }
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <ShoppingCart
+            size={17}
+          />
+
+          <span>
+            Orders
+          </span>
+
+          <strong>
+            {
+              formatNumber(
+                summary.orders
+              )
+            }
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <WalletCards
+            size={17}
+          />
+
+          <span>
+            COD Orders
+          </span>
+
+          <strong>
+            {
+              formatNumber(
+                summary
+                  .cod_orders
+              )
+            }
+          </strong>
+
+        </div>
+
+      </section>
+
+
+      <section>
+
+        <div className="pl-section-header">
+
+          <div>
+
+            <h2>
+              Customer health
+            </h2>
+
+            <p>
+              Core repeat, engagement and
+              customer-risk metrics.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div className="pl-metric-grid">
+
+          {
+            metrics.map(
+              item => (
+                <MetricCard
+                  key={
+                    item.metric_id
+                  }
+                  metric={
+                    item
+                  }
+                  onClick={
+                    openMetric
+                  }
+                />
+              )
+            )
+          }
+
+        </div>
+
+      </section>
+
+
+      <section className="pl-customer-analysis-grid">
+
+        <div className="pl-founder-panel">
+
+          <div className="pl-panel-header">
+
+            <div>
+
+              <span className="pl-page-eyebrow">
+                Acquisition mix
+              </span>
+
+              <h2>
+                Customer volume by channel
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div className="pl-customer-channel-list">
+
+            {
+              topAcquisitionChannels.map(
+                row => (
+                  <div
+                    key={
+                      row.acquisition_channel
+                    }
+                    className="pl-customer-channel-row"
+                  >
+
+                    <div>
+
+                      <strong>
+                        {
+                          row
+                            .acquisition_channel
+                        }
+                      </strong>
+
+                      <span>
+                        {
+                          formatNumber(
+                            row.customers
+                          )
+                        } customers
+                      </span>
+
+                    </div>
+
+
+                    <div>
+
+                      <strong>
+                        {
+                          formatCurrency(
+                            row.average_order_value
+                          )
+                        }
+                      </strong>
+
+                      <span>
+                        AOV
+                      </span>
+
+                    </div>
+
+
+                    <div>
+
+                      <strong>
+                        {
+                          row
+                            .orders_per_customer
+                            .toFixed(2)
+                        }
+                      </strong>
+
+                      <span>
+                        Orders / customer
+                      </span>
+
+                    </div>
+
+
+                    <div>
+
+                      <strong>
+                        {
+                          formatCurrency(
+                            row.order_value
+                          )
+                        }
+                      </strong>
+
+                      <span>
+                        Placed value
+                      </span>
+
+                    </div>
+
+                  </div>
+                )
+              )
+            }
+
+          </div>
+
+        </div>
+
+
+        <div className="pl-founder-panel">
+
+          <div className="pl-panel-header">
+
+            <div>
+
+              <span className="pl-page-eyebrow">
+                Acquisition quality
+              </span>
+
+              <h2>
+                Lowest fulfillment risk
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div className="pl-customer-quality-list">
+
+            {
+              bestQualityChannels.map(
+                row => (
+                  <div
+                    key={
+                      row.acquisition_channel
+                    }
+                    className="pl-customer-quality-row"
+                  >
+
+                    <strong>
+                      {
+                        row
+                          .acquisition_channel
+                      }
+                    </strong>
+
+                    <div>
+                      <span>
+                        RTO
+                      </span>
+
+                      <strong>
+                        {
+                          row
+                            .rto_rate_percent
+                            .toFixed(2)
+                        }%
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>
+                        Returns
+                      </span>
+
+                      <strong>
+                        {
+                          row
+                            .return_rate_percent
+                            .toFixed(2)
+                        }%
+                      </strong>
+                    </div>
+
+                  </div>
+                )
+              )
+            }
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section className="pl-customer-analysis-grid">
+
+        <div className="pl-founder-panel">
+
+          <div className="pl-panel-header">
+
+            <div>
+
+              <span className="pl-page-eyebrow">
+                Risk watch
+              </span>
+
+              <h2>
+                Channels to review
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div className="pl-customer-quality-list">
+
+            {
+              riskiestChannels.map(
+                row => (
+                  <div
+                    key={
+                      row.acquisition_channel
+                    }
+                    className="pl-customer-quality-row risk"
+                  >
+
+                    <strong>
+                      {
+                        row
+                          .acquisition_channel
+                      }
+                    </strong>
+
+                    <div>
+                      <span>
+                        RTO
+                      </span>
+
+                      <strong>
+                        {
+                          row
+                            .rto_rate_percent
+                            .toFixed(2)
+                        }%
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>
+                        Returns
+                      </span>
+
+                      <strong>
+                        {
+                          row
+                            .return_rate_percent
+                            .toFixed(2)
+                        }%
+                      </strong>
+                    </div>
+
+                  </div>
+                )
+              )
+            }
+
+          </div>
+
+        </div>
+
+
+        <div className="pl-founder-panel">
+
+          <div className="pl-panel-header">
+
+            <div>
+
+              <span className="pl-page-eyebrow">
+                Observed retention
+              </span>
+
+              <h2>
+                Cohort retention
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          {
+            selectedMonthCohorts.length
+            > 0
+              ? (
+                <div className="pl-customer-retention">
+
+                  {
+                    selectedMonthCohorts.map(
+                      row => (
+                        <div
+                          key={
+                            row
+                              .months_since_first_order
+                          }
+                          className="pl-retention-row"
+                        >
+
+                          <div>
+
+                            <strong>
+                              M{
+                                row
+                                  .months_since_first_order
+                              }
+                            </strong>
+
+                            <span>
+                              {
+                                formatNumber(
+                                  row
+                                    .active_customers
+                                )
+                              } active
+                            </span>
+
+                          </div>
+
+
+                          <div className="pl-retention-track">
+
+                            <i
+                              style={{
+                                width:
+                                  `${Math.max(
+                                    0,
+                                    Math.min(
+                                      100,
+                                      row
+                                        .retention_percent
+                                    )
+                                  )}%`,
+                              }}
+                            />
+
+                          </div>
+
+
+                          <strong>
+                            {
+                              row
+                                .retention_percent
+                                .toFixed(2)
+                            }%
+                          </strong>
+
+                        </div>
+                      )
+                    )
+                  }
+
+                </div>
+              )
+              : (
+                <div className="pl-empty-panel">
+                  No later retention periods
+                  are observable for this cohort yet.
+                </div>
+              )
+          }
+
+        </div>
+
+      </section>
+
+
+      <section className="pl-founder-panel">
+
+        <div className="pl-panel-header">
+
+          <div>
+
+            <span className="pl-page-eyebrow">
+              Detailed acquisition economics
+            </span>
+
+            <h2>
+              Acquisition channel comparison
+            </h2>
+
+          </div>
+
+        </div>
+
+
         <div className="table-wrap">
+
           <table className="data-table">
 
             <thead>
               <tr>
-                <th>Channel</th>
-                <th>Customers</th>
-                <th>Orders</th>
-                <th>Order Value</th>
-                <th>AOV</th>
-                <th>Orders / Customer</th>
-                <th>RTO</th>
-                <th>Returns</th>
+                <th>
+                  Channel
+                </th>
+
+                <th>
+                  Customers
+                </th>
+
+                <th>
+                  Orders
+                </th>
+
+                <th>
+                  Order Value
+                </th>
+
+                <th>
+                  AOV
+                </th>
+
+                <th>
+                  Orders / Customer
+                </th>
+
+                <th>
+                  RTO
+                </th>
+
+                <th>
+                  Returns
+                </th>
               </tr>
             </thead>
 
             <tbody>
+
               {
                 channels.map(
-                  (
-                    row
-                  ) => (
+                  row => (
                     <tr
                       key={
-                        row.acquisition_channel
+                        row
+                          .acquisition_channel
                       }
                     >
+
                       <td>
                         <strong>
                           {
-                            row.acquisition_channel
+                            row
+                              .acquisition_channel
                           }
                         </strong>
                       </td>
@@ -502,7 +1328,8 @@ export default function Customers({
                       <td>
                         {
                           formatCurrency(
-                            row.average_order_value
+                            row
+                              .average_order_value
                           )
                         }
                       </td>
@@ -530,131 +1357,73 @@ export default function Customers({
                             .toFixed(2)
                         }%
                       </td>
+
                     </tr>
                   )
                 )
               }
+
             </tbody>
 
           </table>
+
         </div>
-      </div>
+
+      </section>
 
 
-      <div className="section-heading">
+      <section className="pl-customer-scope-note">
+
+        <RotateCcw
+          size={20}
+        />
+
         <div>
-          <h2>
-            Cohort Retention
-          </h2>
+
+          <strong>
+            Customer metric scope
+          </strong>
 
           <p>
-            Observed retention for customers
-            first acquired in {month}.
+            Acquisition-channel order value
+            represents placed-order economics,
+            not realized revenue. Cohort retention
+            is observed historical behaviour and
+            is not predictive LTV or churn.
           </p>
+
         </div>
-      </div>
+
+      </section>
 
 
-      <div className="card">
-        {
-          selectedMonthCohorts.length > 0
-            ? (
-              <div className="table-wrap">
-                <table className="data-table">
-
-                  <thead>
-                    <tr>
-                      <th>
-                        Months Since First Order
-                      </th>
-
-                      <th>
-                        Cohort Size
-                      </th>
-
-                      <th>
-                        Active Customers
-                      </th>
-
-                      <th>
-                        Retention
-                      </th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {
-                      selectedMonthCohorts.map(
-                        (
-                          row
-                        ) => (
-                          <tr
-                            key={
-                              row
-                                .months_since_first_order
-                            }
-                          >
-                            <td>
-                              {
-                                row
-                                  .months_since_first_order
-                              }
-                            </td>
-
-                            <td>
-                              {
-                                formatNumber(
-                                  row.cohort_size
-                                )
-                              }
-                            </td>
-
-                            <td>
-                              {
-                                formatNumber(
-                                  row.active_customers
-                                )
-                              }
-                            </td>
-
-                            <td>
-                              {
-                                row
-                                  .retention_percent
-                                  .toFixed(2)
-                              }%
-                            </td>
-                          </tr>
-                        )
-                      )
-                    }
-                  </tbody>
-
-                </table>
-              </div>
-            )
-            : (
-              <div className="empty-state">
-                No later retention periods
-                are observable for this cohort yet.
-              </div>
-            )
+      <MetricDrilldownDrawer
+        open={
+          drilldown.open
         }
-      </div>
 
+        loading={
+          drilldown.loading
+        }
 
-      <div className="card limitation-card">
-        <strong>
-          Customer metric scope
-        </strong>
+        error={
+          drilldown.error
+        }
 
-        <p>
-          Acquisition-channel order value represents
-          placed-order economics, not realized revenue.
-          Cohort retention is observed historical
-          behaviour and is not predictive LTV or churn.
-        </p>
-      </div>
+        data={
+          drilldown.data
+        }
+
+        onClose={
+          drilldown.closeMetric
+        }
+
+        onSuggestedQuestion={() =>
+          navigate(
+            '/analyst'
+          )
+        }
+      />
 
     </div>
   )

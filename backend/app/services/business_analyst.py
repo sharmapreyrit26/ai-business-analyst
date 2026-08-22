@@ -14,6 +14,32 @@ from backend.app.services.d2c_context_builder import (
     build_d2c_business_context,
 )
 
+from backend.app.services.d2c_analysis_executor import (
+    execute_d2c_analysis_plan,
+)
+
+from backend.app.services.d2c_claim_engine import (
+    build_d2c_claims,
+)
+
+from backend.app.services.d2c_hypothesis_engine import (
+    build_d2c_hypotheses,
+)
+
+from backend.app.services.d2c_recommendation_gate import (
+    build_d2c_recommendation_gate,
+)
+
+from backend.app.services.d2c_response_synthesis import (
+    build_d2c_synthesis_context,
+    build_d2c_response_projection,
+    build_deterministic_synthesis_answer,
+)
+
+from backend.app.services.d2c_llm_synthesizer import (
+    synthesize_d2c_response,
+)
+
 
 # ============================================================
 # DATASET ROUTING
@@ -1380,44 +1406,172 @@ def answer_business_question(
                 month
             )
         )
-        llm_context = (
-        build_focused_d2c_context(
-            full_context=business_context,
-            question_type=question_type,
+
+        analysis_execution = (
+            execute_d2c_analysis_plan(
+                question=question,
+                month=month,
+                question_type=question_type,
+                business_context=business_context,
+            )
         )
-)
+
+        claim_analysis = (
+            build_d2c_claims(
+                question_type=question_type,
+                business_context=business_context,
+                analysis_execution=analysis_execution,
+            )
+        )
+
+        hypothesis_analysis = (
+            build_d2c_hypotheses(
+                question_type=question_type,
+                business_context=business_context,
+            )
+        )
+
+        recommendation_analysis = (
+            build_d2c_recommendation_gate(
+                question_type=question_type,
+                claim_analysis=claim_analysis,
+                hypothesis_analysis=hypothesis_analysis,
+            )
+        )
+
+        synthesis_context = (
+            build_d2c_synthesis_context(
+                question=question,
+                month=month,
+                question_type=question_type,
+                claim_analysis=claim_analysis,
+                hypothesis_analysis=hypothesis_analysis,
+                recommendation_analysis=recommendation_analysis,
+            )
+        )
+
+        response_projection = (
+            build_d2c_response_projection(
+                synthesis_context=
+                    synthesis_context,
+            )
+        )
 
         try:
 
-            answer = ask_business_analyst(
-                question=question,
-                question_type=question_type,
-                month=month,
-                business_context=llm_context,
+            synthesis_response = (
+                synthesize_d2c_response(
+                    synthesis_context=
+                        synthesis_context,
+                )
+            )
+
+            executive_answer = (
+                synthesis_response[
+                    "answer"
+                ]
             )
 
             ai_available = True
 
         except Exception:
 
-            answer = _build_d2c_fallback(
-                question=question,
-                question_type=question_type,
-                month=month,
-                context=business_context,
+            executive_answer = (
+                build_deterministic_synthesis_answer(
+                    synthesis_context=
+                        synthesis_context,
+                )
             )
 
             ai_available = False
+
+
+        answer = {
+            "answer":
+                executive_answer,
+
+            "evidence":
+                response_projection[
+                    "evidence"
+                ],
+
+            "likely_driver":
+                response_projection[
+                    "likely_driver"
+                ],
+
+            "recommended_actions":
+                response_projection[
+                    "recommended_actions"
+                ],
+        }
+
 
         return {
             "question": question,
             "month": month,
             "question_type": question_type,
             "analysis_execution": {
-                "total_steps": 1,
-                "successful_steps": 1,
-                "failed_steps": 0,
+                "total_steps":
+                    analysis_execution[
+                        "total_steps"
+                    ],
+
+                "successful_steps":
+                    analysis_execution[
+                        "successful_steps"
+                    ],
+
+                "failed_steps":
+                    analysis_execution[
+                        "failed_steps"
+                    ],
             },
+
+            "analysis_details": {
+                "analysis_plan":
+                    analysis_execution[
+                        "analysis_plan"
+                    ],
+
+                "execution_results": [
+                    {
+                        "step":
+                            item[
+                                "step"
+                            ],
+
+                        "analysis":
+                            item[
+                                "analysis"
+                            ],
+
+                        "reason":
+                            item[
+                                "reason"
+                            ],
+
+                        "execution_status":
+                            item[
+                                "execution_status"
+                            ],
+                    }
+                    for item
+                    in analysis_execution[
+                        "execution_results"
+                    ]
+                ],
+            },
+
+            "claim_analysis":
+                claim_analysis,
+
+            "hypothesis_analysis":
+                hypothesis_analysis,
+
+            "recommendation_analysis":
+                recommendation_analysis,
+
             "ai_available": ai_available,
             "answer": answer,
         }

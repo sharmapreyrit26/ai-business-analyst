@@ -248,6 +248,150 @@ export type BusinessAnswerResponse = {
     failed_steps: number
   } | null
 
+  analysis_details?: {
+    analysis_plan: {
+      step: number
+      analysis: string
+      reason: string
+    }[]
+
+    execution_results: {
+      step: number
+      analysis: string
+      reason: string
+      execution_status:
+        | 'complete'
+        | 'unavailable'
+        | 'error'
+    }[]
+  } | null
+
+  claim_analysis?: {
+    status: string
+    question_type: string
+
+    claims: {
+      claim_id: string
+      claim_type:
+        | 'fact'
+        | 'inference'
+        | 'hypothesis'
+      statement: string
+      confidence:
+        | 'high'
+        | 'medium'
+        | 'low'
+      evidence: {
+        metric: string
+        value: unknown
+        source: string
+      }[]
+      limitation?: string | null
+    }[]
+
+    claim_counts: {
+      fact: number
+      inference: number
+      hypothesis: number
+    }
+
+    confidence_counts: {
+      high: number
+      medium: number
+      low: number
+    }
+
+    confidence_definition: string
+    hypothesis_policy: string
+  } | null
+
+  hypothesis_analysis?: {
+    status: string
+    question_type: string
+
+    hypotheses: {
+      hypothesis_id: string
+      domain: string
+      statement: string
+      related_claim?: string | null
+      status:
+        | 'supported'
+        | 'insufficient_evidence'
+        | 'untested'
+      confidence:
+        | 'high'
+        | 'medium'
+        | 'low'
+
+      current_evidence: {
+        metric: string
+        value: unknown
+        source: string
+      }[]
+
+      missing_evidence: {
+        evidence_id: string
+        description: string
+        reason: string
+        suggested_source?: string | null
+      }[]
+
+      test: string
+      guardrail: string
+    }[]
+
+    hypothesis_count: number
+
+    status_counts: {
+      supported: number
+      insufficient_evidence: number
+      untested: number
+    }
+
+    missing_evidence_count: number
+
+    causal_guardrail: string
+  } | null
+
+  recommendation_analysis?: {
+    status: string
+    question_type: string
+
+    recommendations: {
+      recommendation_id: string
+      domain: string
+      action: string
+      readiness:
+        | 'act_now'
+        | 'test_first'
+        | 'investigate_first'
+        | 'do_not_act'
+      rationale: string
+      evidence_claim_ids: string[]
+      related_hypothesis_ids: string[]
+      guardrail?: string | null
+      next_step?: string | null
+    }[]
+
+    recommendation_count: number
+
+    readiness_counts: {
+      act_now: number
+      test_first: number
+      investigate_first: number
+      do_not_act: number
+    }
+
+    readiness_definition: {
+      act_now: string
+      test_first: string
+      investigate_first: string
+      do_not_act: string
+    }
+
+    guardrail: string
+  } | null
+
   ai_available: boolean
 
   answer: {

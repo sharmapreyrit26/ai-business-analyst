@@ -229,17 +229,27 @@ test(
       '/scenario'
     )
 
+    const aovControl =
+      page
+        .locator(
+          '.pl-scenario-control'
+        )
+        .filter({
+          hasText:
+            /AOV|Average Order Value/i,
+        })
+
     const input =
-      page.getByPlaceholder(
-        /What if|Example/i
-      ).first()
+      aovControl.locator(
+        'input[type="number"]'
+      )
 
     await expect(
       input
     ).toBeVisible()
 
     await input.fill(
-      'What if AOV increases by 10%?'
+      '10'
     )
 
     const runButton =
@@ -247,7 +257,7 @@ test(
         'button',
         {
           name:
-            /Run Scenario/i,
+            /Run scenario/i,
         }
       )
 
@@ -255,14 +265,44 @@ test(
       runButton
     ).toBeVisible()
 
+    await expect(
+      runButton
+    ).toBeEnabled()
+
     await runButton.click()
 
     await expect(
-      page.locator(
-        'body'
+      page.getByRole(
+        'heading',
+        {
+          name:
+            'Scenario result',
+        }
       )
-    ).toContainText(
-      /Scenario Result/i
+    ).toBeVisible({
+      timeout: 10000,
+    })
+
+    const dimensions =
+      await page.evaluate(
+        () => ({
+          width:
+            document
+              .documentElement
+              .scrollWidth,
+
+          viewport:
+            document
+              .documentElement
+              .clientWidth,
+        })
+      )
+
+    expect(
+      dimensions.width
+    ).toBeLessThanOrEqual(
+      dimensions.viewport + 2
     )
   }
 )
+

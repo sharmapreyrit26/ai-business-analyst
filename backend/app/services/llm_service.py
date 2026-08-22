@@ -29,6 +29,8 @@ def ask_business_analyst(
     question_type: str,
     month: str,
     business_context: dict,
+    *,
+    generate_recommendations: bool = True,
 ) -> dict:
     """
     Ask the LLM to interpret deterministic
@@ -426,6 +428,35 @@ Do not invent unsupported calculations or causes.
     # PROMPT
     # ========================================================
 
+    if generate_recommendations:
+
+        recommendation_contract = """
+Recommendations may be generated only when they are
+supported by the available evidence.
+
+Do not recommend an action that assumes an unproven
+causal explanation.
+
+If the evidence is insufficient for a management action,
+return an empty recommended_actions list.
+"""
+
+        recommendation_json = """
+    ,"recommended_actions": [
+        "Recommended action 1"
+    ]
+"""
+
+    else:
+
+        recommendation_contract = """
+Do not generate management actions.
+Recommendations are produced by a deterministic
+evidence-gating layer outside the LLM.
+"""
+
+        recommendation_json = ""
+
     prompt = f"""
 You are Ask ProfitLens, an AI Business Analyst for D2C brands.
 
@@ -500,10 +531,8 @@ Return exactly this structure:
         "Evidence point 1",
         "Evidence point 2"
     ],
-    "likely_driver": "Most likely supported driver or Not applicable.",
-    "recommended_actions": [
-        "Recommended action 1"
-    ]
+    "likely_driver": "Most likely supported driver or Not applicable."
+{recommendation_json}
 }}
 
 
@@ -586,7 +615,10 @@ Do not include any text outside the JSON.
         )
 
         return validate_business_response(
-            response
+            response,
+            require_recommended_actions=(
+                generate_recommendations
+            ),
         )
 
     except (

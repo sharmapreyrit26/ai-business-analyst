@@ -235,12 +235,14 @@ test(
     page,
   }) => {
     await page.route(
-      '**/analytics/scenario',
+      '**/analytics/v2/scenario/run',
       async route => {
         await route.fulfill({
           status: 500,
+
           contentType:
             'application/json',
+
           body: JSON.stringify({
             detail:
               'Simulated scenario failure',
@@ -253,13 +255,22 @@ test(
       '/scenario'
     )
 
-    await page
-      .getByPlaceholder(
-        /What if|Example/i
+    const aovControl =
+      page
+        .locator(
+          '.pl-scenario-control'
+        )
+        .filter({
+          hasText:
+            /AOV|Average Order Value/i,
+        })
+
+    await aovControl
+      .locator(
+        'input[type="number"]'
       )
-      .first()
       .fill(
-        'What if AOV increases by 10%?'
+        '10'
       )
 
     await page
@@ -267,21 +278,33 @@ test(
         'button',
         {
           name:
-            /Run Scenario/i,
+            /Run scenario/i,
         }
       )
       .click()
 
     await expect(
       page.locator(
-        '.notice.error'
+        '.pl-scenario-error'
       )
-    ).toBeVisible()
+    ).toBeVisible({
+      timeout: 10000,
+    })
 
     await expect(
-      page.locator('body')
+      page.locator(
+        '.pl-scenario-error'
+      )
+    ).toContainText(
+      /Simulated scenario failure|Could not run scenario/i
+    )
+
+    await expect(
+      page.locator(
+        'body'
+      )
     ).not.toContainText(
-      /undefined|NaN|\[object Object\]/
+      /\b(?:undefined|NaN|null)\b/
     )
   }
 )

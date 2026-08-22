@@ -418,3 +418,4 @@ def test_combined_scenario_math():
         88659.91,
         abs_tol=0.01,
     )
+    

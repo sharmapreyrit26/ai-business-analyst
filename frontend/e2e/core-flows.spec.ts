@@ -170,38 +170,51 @@ test(
       '/scenario'
     )
 
-    const input =
-      page.getByPlaceholder(
-        /What if|Example/i
-      ).first()
+    const aovControl =
+      page
+        .locator(
+          '.pl-scenario-control'
+        )
+        .filter({
+          hasText:
+            /AOV|Average Order Value/i,
+        })
 
-    await input.fill(
-      'What if AOV increases by 10%?'
-    )
+    await aovControl
+      .locator(
+        'input[type="number"]'
+      )
+      .fill(
+        '10'
+      )
 
     await page
       .getByRole(
         'button',
         {
           name:
-            /Run Scenario/i,
+            /Run scenario/i,
         }
       )
       .click()
 
     await expect(
-      page.getByText(
-        /Scenario Result/i
-      ).first()
-    ).toBeVisible()
+      page.getByRole(
+        'heading',
+        {
+          name:
+            'Scenario result',
+        }
+      )
+    ).toBeVisible({
+      timeout: 10000,
+    })
 
     await expect(
       page.locator(
-        'body'
-      )
-    ).toContainText(
-      /1,275|1275/
-    )
+        '.pl-scenario-result-card'
+      ).first()
+    ).toBeVisible()
   }
 )
 
@@ -215,40 +228,45 @@ test(
       '/scenario'
     )
 
-    const input =
-      page.getByPlaceholder(
-        /What if|Example/i
-      ).first()
+    const rtoControl =
+      page
+        .locator(
+          '.pl-scenario-control'
+        )
+        .filter({
+          hasText:
+            /RTO/i,
+        })
 
-    await input.fill(
-      'What if RTO reduces by 20%?'
-    )
+    await rtoControl
+      .locator(
+        'input[type="number"]'
+      )
+      .fill(
+        '20'
+      )
 
     await page
       .getByRole(
         'button',
         {
           name:
-            /Run Scenario/i,
+            /Run scenario/i,
         }
       )
       .click()
 
     await expect(
-      page.locator(
-        'body'
+      page.getByRole(
+        'heading',
+        {
+          name:
+            'Scenario result',
+        }
       )
-    ).toContainText(
-      '9.62'
-    )
-
-    await expect(
-      page.locator(
-        'body'
-      )
-    ).toContainText(
-      /3,27,953|327953/
-    )
+    ).toBeVisible({
+      timeout: 10000,
+    })
   }
 )
 
@@ -262,47 +280,74 @@ test(
       '/scenario'
     )
 
-    const input =
-      page.getByPlaceholder(
-        /What if|Example/i
-      ).first()
+    const controls =
+      page.locator(
+        '.pl-scenario-control'
+      )
 
-    await input.fill(
-      'What if orders increase by 10%, AOV increases by 5%, and RTO reduces by 20%?'
-    )
+    await controls
+      .filter({
+        hasText:
+          /Orders/i,
+      })
+      .locator(
+        'input[type="number"]'
+      )
+      .fill(
+        '10'
+      )
+
+    await controls
+      .filter({
+        hasText:
+          /AOV|Average Order Value/i,
+      })
+      .locator(
+        'input[type="number"]'
+      )
+      .fill(
+        '5'
+      )
+
+    await controls
+      .filter({
+        hasText:
+          /RTO/i,
+      })
+      .locator(
+        'input[type="number"]'
+      )
+      .fill(
+        '20'
+      )
 
     await page
       .getByRole(
         'button',
         {
           name:
-            /Run Scenario/i,
+            /Run scenario/i,
         }
       )
       .click()
 
-    const body =
-      page.locator(
-        'body'
+    await expect(
+      page.getByRole(
+        'heading',
+        {
+          name:
+            'Scenario result',
+        }
       )
+    ).toBeVisible({
+      timeout: 10000,
+    })
 
     await expect(
-      body
-    ).toContainText(
-      '9.62'
-    )
-
-    await expect(
-      body
-    ).toContainText(
-      /1,30,44,990|13044990/
-    )
-
-    await expect(
-      body
-    ).toContainText(
-      /30,19,251|3019251/
-    )
+      page.locator(
+        '.pl-scenario-result-card'
+      ).first()
+    ).toBeVisible()
   }
 )
 

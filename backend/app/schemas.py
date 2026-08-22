@@ -118,6 +118,22 @@ class BusinessQuestionResponse(BaseModel):
         AnalysisExecutionSummary
     ] = None
 
+    analysis_details: Optional[
+        dict[str, Any]
+    ] = None
+
+    claim_analysis: Optional[
+        dict[str, Any]
+    ] = None
+
+    hypothesis_analysis: Optional[
+        dict[str, Any]
+    ] = None
+
+    recommendation_analysis: Optional[
+        dict[str, Any]
+    ] = None
+
     ai_available: bool
 
     answer: BusinessAnswer

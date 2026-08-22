@@ -16,6 +16,11 @@ from backend.app.routes.internal import (
 )
 
 
+from backend.app.routes.platform_v2 import (
+    router as platform_v2_router,
+)
+
+
 app = FastAPI(
     title="ProfitLens",
     description=(
@@ -85,5 +90,14 @@ app.include_router(
 
 app.include_router(
     internal_router
+)
+
+
+# ============================================================
+# PROFITLENS PLATFORM V2 API
+# ============================================================
+
+app.include_router(
+    platform_v2_router
 )
 

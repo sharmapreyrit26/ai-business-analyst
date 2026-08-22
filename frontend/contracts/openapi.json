@@ -1,0 +1,3271 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ProfitLens",
+    "description": "Deterministic-first AI business analytics for D2C brands.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Root",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/dataset-summary": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Dataset Summary",
+        "description": "Return metadata about the connected\nProfitLens India D2C demo dataset.",
+        "operationId": "dataset_summary_analytics_d2c_dataset_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/reporting-periods": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Reporting Periods",
+        "description": "Return available D2C reporting periods.\n\nJanuary and December are intentionally\npartial in the synthetic dataset.\n\nThe latest complete month becomes the\ndefault reporting period.",
+        "operationId": "reporting_periods_analytics_d2c_reporting_periods_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/financials/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Financials",
+        "description": "Return deterministic financial metrics\nfor one D2C reporting month.",
+        "operationId": "financials_analytics_d2c_financials__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/profitability/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Profitability",
+        "description": "Return full ProfitLens profitability\nmetrics for one D2C reporting month.",
+        "operationId": "profitability_analytics_d2c_profitability__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/monthly-financials": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Monthly Financials",
+        "description": "Return deterministic monthly financial\nhistory for the D2C dataset.",
+        "operationId": "monthly_financials_analytics_d2c_monthly_financials_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/monthly-profitability": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Monthly Profitability",
+        "description": "Return monthly ProfitLens profitability\nincluding aggregate marketing economics.",
+        "operationId": "monthly_profitability_analytics_d2c_monthly_profitability_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/products/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Products",
+        "description": "Return D2C product-level commercial\nperformance for one reporting month.",
+        "operationId": "products_analytics_d2c_products__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/categories/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Categories",
+        "description": "Return category-level commercial\nperformance for one reporting month.",
+        "operationId": "categories_analytics_d2c_categories__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/customers/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Customers",
+        "description": "Return customer KPIs for one D2C reporting month.",
+        "operationId": "customers_analytics_d2c_customers__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/acquisition-channels/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Acquisition Channels",
+        "description": "Return customer and placed-order performance\nby acquisition channel.\n\nOrder value metrics represent placed-order\neconomics rather than realized revenue.",
+        "operationId": "acquisition_channels_analytics_d2c_acquisition_channels__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/customer-cohorts": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Customer Cohorts",
+        "description": "Return observed monthly customer retention cohorts.",
+        "operationId": "customer_cohorts_analytics_d2c_customer_cohorts_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/logistics/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Logistics",
+        "description": "Return headline D2C logistics metrics\nfor one reporting month.",
+        "operationId": "logistics_analytics_d2c_logistics__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/couriers/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Courier Performance",
+        "description": "Return courier-level operational performance.",
+        "operationId": "courier_performance_analytics_d2c_couriers__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/payment-logistics/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Payment Logistics",
+        "description": "Compare COD and prepaid logistics outcomes.",
+        "operationId": "payment_logistics_analytics_d2c_payment_logistics__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/zones/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Zone Performance",
+        "description": "Return logistics risk and TAT by zone.",
+        "operationId": "zone_performance_analytics_d2c_zones__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/marketing/monthly-trend": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Marketing Monthly Trend",
+        "description": "Return monthly marketing performance and MoM changes.",
+        "operationId": "marketing_monthly_trend_analytics_d2c_marketing_monthly_trend_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/marketing/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Marketing Summary",
+        "description": "Return headline marketing performance for one month.",
+        "operationId": "marketing_summary_analytics_d2c_marketing__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/marketing/channels/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Marketing Channels",
+        "description": "Return acquisition-channel marketing performance.",
+        "operationId": "marketing_channels_analytics_d2c_marketing_channels__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/marketing/campaigns/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Marketing Campaigns",
+        "description": "Return campaign-level marketing performance.",
+        "operationId": "marketing_campaigns_analytics_d2c_marketing_campaigns__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/marketing/insights/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "Marketing Insights",
+        "description": "Return deterministic marketing performance signals.",
+        "operationId": "marketing_insights_analytics_d2c_marketing_insights__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/inventory/summary": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "D2C Inventory Summary",
+        "description": "Current inventory snapshot summary.\n\nInventory data is not historical/monthly.",
+        "operationId": "d2c_inventory_summary_analytics_d2c_inventory_summary_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/inventory/skus": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "D2C Inventory Skus",
+        "description": "SKU-level inventory health across warehouses.",
+        "operationId": "d2c_inventory_skus_analytics_d2c_inventory_skus_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/inventory/warehouses": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "D2C Inventory Warehouses",
+        "description": "Warehouse-level inventory health.",
+        "operationId": "d2c_inventory_warehouses_analytics_d2c_inventory_warehouses_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/inventory/categories": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "D2C Inventory Categories",
+        "description": "Category-level inventory health.",
+        "operationId": "d2c_inventory_categories_analytics_d2c_inventory_categories_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/d2c/overview/{month}": {
+      "get": {
+        "tags": [
+          "D2C Analytics"
+        ],
+        "summary": "D2C Overview",
+        "description": "Return the canonical executive D2C overview\nfor the requested reporting month.",
+        "operationId": "d2c_overview_analytics_d2c_overview__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/business-question": {
+      "post": {
+        "tags": [
+          "ProfitLens Intelligence"
+        ],
+        "summary": "Business Question",
+        "description": "Ask ProfitLens a natural-language\nbusiness question.\n\nD2C deterministic analytics own all\nnumerical business truth.\n\nAI is used only for interpretation.",
+        "operationId": "business_question_analytics_business_question_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BusinessQuestionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BusinessQuestionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/scenario": {
+      "post": {
+        "tags": [
+          "ProfitLens Intelligence"
+        ],
+        "summary": "Scenario Analysis",
+        "description": "Run a deterministic ProfitLens sensitivity\nscenario.\n\nScenario calculations are performed by the\ndeterministic scenario engine.",
+        "operationId": "scenario_analysis_analytics_scenario_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ScenarioResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/analysis-plan": {
+      "post": {
+        "tags": [
+          "Internal"
+        ],
+        "summary": "Analysis Plan",
+        "description": "Execute an internal deterministic analysis plan.\n\nIntended for:\n- debugging\n- auditability\n- development\n- future analyst/admin tooling\n\nThis endpoint is not used by the\nproduction ProfitLens frontend.",
+        "operationId": "analysis_plan_internal_analysis_plan_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisPlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisPlanResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/health": {
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Platform Health",
+        "operationId": "platform_health_analytics_v2_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/capabilities": {
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Platform Capabilities",
+        "operationId": "platform_capabilities_analytics_v2_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/metrics": {
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Metrics",
+        "operationId": "metrics_analytics_v2_metrics_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/metrics/{metric_id}": {
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Metric Definition",
+        "operationId": "metric_definition_analytics_v2_metrics__metric_id__get",
+        "parameters": [
+          {
+            "name": "metric_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Metric Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/metrics/{metric_id}/lineage": {
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Metric Lineage",
+        "operationId": "metric_lineage_analytics_v2_metrics__metric_id__lineage_get",
+        "parameters": [
+          {
+            "name": "metric_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Metric Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/metrics/{metric_id}/drilldown": {
+      "post": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Metric Drilldown",
+        "operationId": "metric_drilldown_analytics_v2_metrics__metric_id__drilldown_post",
+        "parameters": [
+          {
+            "name": "metric_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Metric Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DrilldownRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/scenario/capabilities": {
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Scenario Capabilities",
+        "operationId": "scenario_capabilities_analytics_v2_scenario_capabilities_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/scenario/run": {
+      "post": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Scenario Run",
+        "operationId": "scenario_run_analytics_v2_scenario_run_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ScenarioV2Request"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/investigations/{month}": {
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Investigations",
+        "operationId": "investigations_analytics_v2_investigations__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/alerts/{month}": {
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Alerts",
+        "operationId": "alerts_analytics_v2_alerts__month__get",
+        "parameters": [
+          {
+            "name": "month",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/alerts/evaluate": {
+      "post": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Custom Alert Evaluation",
+        "operationId": "custom_alert_evaluation_analytics_v2_alerts_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomAlertEvaluationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/exports": {
+      "post": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Create Export",
+        "operationId": "create_export_analytics_v2_exports_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportBuildRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/saved-views": {
+      "post": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Saved View Create",
+        "operationId": "saved_view_create_analytics_v2_saved_views_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSavedViewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Saved View List",
+        "operationId": "saved_view_list_analytics_v2_saved_views_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Page"
+            }
+          },
+          {
+            "name": "created_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Created By"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/saved-views/{saved_view_id}": {
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Saved View Get",
+        "operationId": "saved_view_get_analytics_v2_saved_views__saved_view_id__get",
+        "parameters": [
+          {
+            "name": "saved_view_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Saved View Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Saved View Delete",
+        "operationId": "saved_view_delete_analytics_v2_saved_views__saved_view_id__delete",
+        "parameters": [
+          {
+            "name": "saved_view_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Saved View Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/workspaces": {
+      "post": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Workspace Create",
+        "operationId": "workspace_create_analytics_v2_workspaces_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkspaceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/workspaces/{workspace_id}": {
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Workspace Get",
+        "operationId": "workspace_get_analytics_v2_workspaces__workspace_id__get",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/users/{user_id}/workspaces": {
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "User Workspaces",
+        "operationId": "user_workspaces_analytics_v2_users__user_id__workspaces_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/workspaces/{workspace_id}/members": {
+      "post": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Workspace Member Add",
+        "operationId": "workspace_member_add_analytics_v2_workspaces__workspace_id__members_post",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddWorkspaceMemberRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/brands": {
+      "post": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Brand Create",
+        "operationId": "brand_create_analytics_v2_brands_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBrandRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/brands/{brand_id}": {
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Brand Get",
+        "operationId": "brand_get_analytics_v2_brands__brand_id__get",
+        "parameters": [
+          {
+            "name": "brand_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Brand Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/workspaces/{workspace_id}/brands": {
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Workspace Brands",
+        "operationId": "workspace_brands_analytics_v2_workspaces__workspace_id__brands_get",
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Workspace Id"
+            }
+          },
+          {
+            "name": "include_archived",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Archived"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/brands/{brand_id}/status": {
+      "patch": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Brand Status Update",
+        "operationId": "brand_status_update_analytics_v2_brands__brand_id__status_patch",
+        "parameters": [
+          {
+            "name": "brand_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Brand Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBrandStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/data-sources": {
+      "post": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Data Source Create",
+        "operationId": "data_source_create_analytics_v2_data_sources_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDataSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/brands/{brand_id}/data-sources": {
+      "get": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Brand Data Sources",
+        "operationId": "brand_data_sources_analytics_v2_brands__brand_id__data_sources_get",
+        "parameters": [
+          {
+            "name": "brand_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Brand Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/analytics/v2/data-sources/{data_source_id}/status": {
+      "patch": {
+        "tags": [
+          "ProfitLens Platform V2"
+        ],
+        "summary": "Data Source Status Update",
+        "operationId": "data_source_status_update_analytics_v2_data_sources__data_source_id__status_patch",
+        "parameters": [
+          {
+            "name": "data_source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Data Source Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDataSourceStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AddWorkspaceMemberRequest": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "title": "User Id"
+          },
+          "role": {
+            "$ref": "#/components/schemas/WorkspaceRole"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "role"
+        ],
+        "title": "AddWorkspaceMemberRequest"
+      },
+      "AlertOperator": {
+        "type": "string",
+        "enum": [
+          "greater_than",
+          "greater_than_or_equal",
+          "less_than",
+          "less_than_or_equal",
+          "equal"
+        ],
+        "title": "AlertOperator"
+      },
+      "AlertRule": {
+        "properties": {
+          "alert_rule_id": {
+            "type": "string",
+            "title": "Alert Rule Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "metric_id": {
+            "type": "string",
+            "title": "Metric Id"
+          },
+          "operator": {
+            "$ref": "#/components/schemas/AlertOperator"
+          },
+          "threshold": {
+            "type": "number",
+            "title": "Threshold"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/AlertSeverity"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alert_rule_id",
+          "name",
+          "metric_id",
+          "operator",
+          "threshold",
+          "severity"
+        ],
+        "title": "AlertRule"
+      },
+      "AlertSeverity": {
+        "type": "string",
+        "enum": [
+          "critical",
+          "warning",
+          "info"
+        ],
+        "title": "AlertSeverity"
+      },
+      "AnalysisExecutionSummary": {
+        "properties": {
+          "total_steps": {
+            "type": "integer",
+            "title": "Total Steps"
+          },
+          "successful_steps": {
+            "type": "integer",
+            "title": "Successful Steps"
+          },
+          "failed_steps": {
+            "type": "integer",
+            "title": "Failed Steps"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_steps",
+          "successful_steps",
+          "failed_steps"
+        ],
+        "title": "AnalysisExecutionSummary"
+      },
+      "AnalysisPlanRequest": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "month": {
+            "type": "string",
+            "title": "Month",
+            "default": "2025-11"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "AnalysisPlanRequest"
+      },
+      "AnalysisPlanResponse": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "question_type": {
+            "type": "string",
+            "title": "Question Type"
+          },
+          "total_steps": {
+            "type": "integer",
+            "title": "Total Steps"
+          },
+          "successful_steps": {
+            "type": "integer",
+            "title": "Successful Steps"
+          },
+          "failed_steps": {
+            "type": "integer",
+            "title": "Failed Steps"
+          },
+          "analysis_plan": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Analysis Plan"
+          },
+          "execution_results": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Execution Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "month",
+          "question_type",
+          "total_steps",
+          "successful_steps",
+          "failed_steps",
+          "analysis_plan",
+          "execution_results"
+        ],
+        "title": "AnalysisPlanResponse"
+      },
+      "AnalyticsContext": {
+        "properties": {
+          "workspace_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workspace Id"
+          },
+          "brand_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Brand Id"
+          },
+          "period": {
+            "$ref": "#/components/schemas/DateRange"
+          },
+          "comparison": {
+            "$ref": "#/components/schemas/ComparisonPeriod"
+          },
+          "filters": {
+            "$ref": "#/components/schemas/AnalyticsFilters"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period"
+        ],
+        "title": "AnalyticsContext",
+        "description": "Shared ProfitLens analytics context.\n\nThis becomes the common contract used by:\n- dashboards\n- charts\n- tables\n- AI Analyst\n- investigations\n- Scenario Lab\n- exports\n\nExisting month-based endpoints can continue operating\nduring the migration."
+      },
+      "AnalyticsFilters": {
+        "properties": {
+          "channels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Channels"
+          },
+          "categories": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Categories"
+          },
+          "skus": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Skus"
+          },
+          "couriers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Couriers"
+          },
+          "warehouses": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warehouses"
+          },
+          "payment_methods": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Payment Methods"
+          },
+          "states": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "States"
+          },
+          "zones": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Zones"
+          }
+        },
+        "type": "object",
+        "title": "AnalyticsFilters"
+      },
+      "BrandStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "paused",
+          "archived"
+        ],
+        "title": "BrandStatus"
+      },
+      "BusinessAnswer": {
+        "properties": {
+          "answer": {
+            "type": "string",
+            "title": "Answer"
+          },
+          "evidence": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "likely_driver": {
+            "type": "string",
+            "title": "Likely Driver"
+          },
+          "recommended_actions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recommended Actions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "answer",
+          "likely_driver"
+        ],
+        "title": "BusinessAnswer"
+      },
+      "BusinessQuestionRequest": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "month": {
+            "type": "string",
+            "title": "Month",
+            "default": "2025-11"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "BusinessQuestionRequest"
+      },
+      "BusinessQuestionResponse": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "question_type": {
+            "type": "string",
+            "title": "Question Type"
+          },
+          "analysis_execution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalysisExecutionSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ai_available": {
+            "type": "boolean",
+            "title": "Ai Available"
+          },
+          "answer": {
+            "$ref": "#/components/schemas/BusinessAnswer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "month",
+          "question_type",
+          "ai_available",
+          "answer"
+        ],
+        "title": "BusinessQuestionResponse"
+      },
+      "ComparisonPeriod": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "none",
+              "previous_period",
+              "previous_month",
+              "previous_year",
+              "custom"
+            ],
+            "title": "Mode",
+            "default": "previous_period"
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Start Date"
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "End Date"
+          }
+        },
+        "type": "object",
+        "title": "ComparisonPeriod"
+      },
+      "CreateBrandRequest": {
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "title": "Workspace Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "country": {
+            "type": "string",
+            "title": "Country",
+            "default": "India"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "INR"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "default": "Asia/Kolkata"
+          },
+          "business_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Business Type"
+          },
+          "financial_year_start_month": {
+            "type": "integer",
+            "title": "Financial Year Start Month",
+            "default": 4
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "name"
+        ],
+        "title": "CreateBrandRequest"
+      },
+      "CreateDataSourceRequest": {
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "title": "Workspace Id"
+          },
+          "brand_id": {
+            "type": "string",
+            "title": "Brand Id"
+          },
+          "source_type": {
+            "$ref": "#/components/schemas/DataSourceType"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "brand_id",
+          "source_type"
+        ],
+        "title": "CreateDataSourceRequest"
+      },
+      "CreateSavedViewRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "page": {
+            "type": "string",
+            "title": "Page"
+          },
+          "context": {
+            "$ref": "#/components/schemas/AnalyticsContext"
+          },
+          "scope": {
+            "$ref": "#/components/schemas/SavedViewScope",
+            "default": "private"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default",
+            "default": false
+          },
+          "created_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created By"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "page",
+          "context"
+        ],
+        "title": "CreateSavedViewRequest"
+      },
+      "CreateWorkspaceRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "owner_user_id": {
+            "type": "string",
+            "title": "Owner User Id"
+          },
+          "workspace_type": {
+            "$ref": "#/components/schemas/WorkspaceType",
+            "default": "brand"
+          },
+          "owner_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Email"
+          },
+          "owner_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Display Name"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "owner_user_id"
+        ],
+        "title": "CreateWorkspaceRequest"
+      },
+      "CustomAlertEvaluationRequest": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/AlertRule"
+            },
+            "type": "array",
+            "title": "Rules"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "rules"
+        ],
+        "title": "CustomAlertEvaluationRequest"
+      },
+      "DataSourceStatus": {
+        "type": "string",
+        "enum": [
+          "disconnected",
+          "connecting",
+          "connected",
+          "syncing",
+          "error",
+          "paused"
+        ],
+        "title": "DataSourceStatus"
+      },
+      "DataSourceType": {
+        "type": "string",
+        "enum": [
+          "shopify",
+          "woocommerce",
+          "meta_ads",
+          "google_ads",
+          "shiprocket",
+          "delhivery",
+          "razorpay",
+          "unicommerce",
+          "klaviyo",
+          "csv",
+          "xlsx"
+        ],
+        "title": "DataSourceType"
+      },
+      "DateRange": {
+        "properties": {
+          "start_date": {
+            "type": "string",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "title": "End Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_date",
+          "end_date"
+        ],
+        "title": "DateRange"
+      },
+      "DrilldownRequest": {
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Value"
+          },
+          "previous_value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Value"
+          },
+          "component_values": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Component Values"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "title": "DrilldownRequest"
+      },
+      "ExportBuildRequest": {
+        "properties": {
+          "export": {
+            "$ref": "#/components/schemas/ExportRequest"
+          },
+          "data": {
+            "title": "Data"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "export",
+          "data"
+        ],
+        "title": "ExportBuildRequest"
+      },
+      "ExportDelivery": {
+        "type": "string",
+        "enum": [
+          "download",
+          "email"
+        ],
+        "title": "ExportDelivery"
+      },
+      "ExportFormat": {
+        "type": "string",
+        "enum": [
+          "csv",
+          "json",
+          "xlsx",
+          "pdf"
+        ],
+        "title": "ExportFormat"
+      },
+      "ExportRequest": {
+        "properties": {
+          "report_id": {
+            "type": "string",
+            "title": "Report Id"
+          },
+          "month": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Month"
+          },
+          "analytics_context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnalyticsContext"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "format": {
+            "$ref": "#/components/schemas/ExportFormat",
+            "default": "csv"
+          },
+          "delivery": {
+            "$ref": "#/components/schemas/ExportDelivery",
+            "default": "download"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "filename": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filename"
+          },
+          "include_metadata": {
+            "type": "boolean",
+            "title": "Include Metadata",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "report_id"
+        ],
+        "title": "ExportRequest"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "SavedViewScope": {
+        "type": "string",
+        "enum": [
+          "private",
+          "workspace"
+        ],
+        "title": "SavedViewScope"
+      },
+      "ScenarioChanges": {
+        "properties": {
+          "orders_change_percent": {
+            "type": "number",
+            "title": "Orders Change Percent",
+            "default": 0.0
+          },
+          "aov_change_percent": {
+            "type": "number",
+            "title": "Aov Change Percent",
+            "default": 0.0
+          },
+          "rto_reduction_percent": {
+            "type": "number",
+            "title": "Rto Reduction Percent",
+            "default": 0.0
+          },
+          "marketing_spend_change_percent": {
+            "type": "number",
+            "title": "Marketing Spend Change Percent",
+            "default": 0.0
+          },
+          "cac_change_percent": {
+            "type": "number",
+            "title": "Cac Change Percent",
+            "default": 0.0
+          },
+          "discount_rate_change_percent": {
+            "type": "number",
+            "title": "Discount Rate Change Percent",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "title": "ScenarioChanges",
+        "description": "Structured Scenario Lab controls.\n\nPercent fields represent relative changes unless\notherwise stated.\n\nExamples:\n    orders_change_percent = 10\n        -> orders increase by 10%\n\n    marketing_spend_change_percent = -10\n        -> marketing spend decreases by 10%\n\n    rto_reduction_percent = 20\n        -> RTO volume/rate reduced by 20%"
+      },
+      "ScenarioRequest": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "month": {
+            "type": "string",
+            "title": "Month",
+            "default": "2025-11"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "ScenarioRequest"
+      },
+      "ScenarioResponse": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "scenario_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Type"
+          },
+          "parameters": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parameters"
+          },
+          "parser_result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parser Result"
+          },
+          "scenario_result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario Result"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "month",
+          "status"
+        ],
+        "title": "ScenarioResponse"
+      },
+      "ScenarioV2Request": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "changes": {
+            "$ref": "#/components/schemas/ScenarioChanges"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "changes"
+        ],
+        "title": "ScenarioV2Request"
+      },
+      "SyncStatus": {
+        "type": "string",
+        "enum": [
+          "never",
+          "pending",
+          "running",
+          "success",
+          "failed"
+        ],
+        "title": "SyncStatus"
+      },
+      "UpdateBrandStatusRequest": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/BrandStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "UpdateBrandStatusRequest"
+      },
+      "UpdateDataSourceStatusRequest": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/DataSourceStatus"
+          },
+          "sync_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SyncStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_synced_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Synced At"
+          },
+          "row_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row Count"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "UpdateDataSourceStatusRequest"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WorkspaceRole": {
+        "type": "string",
+        "enum": [
+          "owner",
+          "admin",
+          "analyst",
+          "viewer"
+        ],
+        "title": "WorkspaceRole"
+      },
+      "WorkspaceType": {
+        "type": "string",
+        "enum": [
+          "brand",
+          "agency",
+          "portfolio"
+        ],
+        "title": "WorkspaceType"
+      }
+    }
+  }
+}

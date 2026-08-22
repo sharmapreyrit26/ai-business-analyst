@@ -6,14 +6,36 @@ import {
 
 import {
   AlertTriangle,
+  ArrowRight,
   Boxes,
+  CircleDollarSign,
   PackageSearch,
+  RefreshCcw,
+  Search,
+  Sparkles,
+  TriangleAlert,
   Warehouse,
 } from 'lucide-react'
 
 import {
+  useNavigate,
+} from 'react-router-dom'
+
+import {
   api,
 } from '../api/profitlens'
+
+import {
+  MetricCard,
+} from '../components/metrics/MetricCard'
+
+import {
+  MetricDrilldownDrawer,
+} from '../components/metrics/MetricDrilldownDrawer'
+
+import {
+  useMetricDrilldown,
+} from '../components/metrics/useMetricDrilldown'
 
 import type {
   D2CInventoryCategoryRow,
@@ -21,6 +43,11 @@ import type {
   D2CInventorySummaryResponse,
   D2CInventoryWarehouseRow,
 } from '../types/api'
+
+import type {
+  MetricContract,
+  MetricUnit,
+} from '../types/metric'
 
 
 function formatCurrency(
@@ -37,6 +64,21 @@ function formatCurrency(
 }
 
 
+function formatCompactCurrency(
+  value: number
+) {
+  return new Intl.NumberFormat(
+    'en-IN',
+    {
+      style: 'currency',
+      currency: 'INR',
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }
+  ).format(value)
+}
+
+
 function formatNumber(
   value: number
 ) {
@@ -46,34 +88,113 @@ function formatNumber(
 }
 
 
+function buildMetric(
+  input: {
+    metricId: string
+    label: string
+    value: number
+    formattedValue: string
+    unit: MetricUnit
+    higherIsBetter: boolean
+    definition?: string
+  }
+): MetricContract {
+  return {
+    metric_id:
+      input.metricId,
+
+    label:
+      input.label,
+
+    value:
+      input.value,
+
+    formatted_value:
+      input.formattedValue,
+
+    unit:
+      input.unit,
+
+    comparison: {
+      previous_value:
+        null,
+
+      change_absolute:
+        null,
+
+      change_percent:
+        null,
+
+      direction:
+        'unknown',
+    },
+
+    sentiment:
+      'neutral',
+
+    definition:
+      input.definition
+      ?? null,
+
+    formula:
+      null,
+
+    data_quality:
+      'verified',
+
+    source: {
+      engine:
+        null,
+
+      tables:
+        [],
+
+      fields:
+        [],
+    },
+
+    metadata: {
+      higher_is_better:
+        input.higherIsBetter,
+    },
+  }
+}
+
+
 export default function Inventory() {
+  const navigate =
+    useNavigate()
+
+  const drilldown =
+    useMetricDrilldown()
+
   const [
     summary,
     setSummary,
-  ] = useState<D2CInventorySummaryResponse | null>(
-    null
-  )
+  ] = useState<
+    D2CInventorySummaryResponse | null
+  >(null)
 
   const [
     skus,
     setSkus,
-  ] = useState<D2CInventorySkuRow[]>(
-    []
-  )
+  ] = useState<
+    D2CInventorySkuRow[]
+  >([])
 
   const [
     warehouses,
     setWarehouses,
-  ] = useState<D2CInventoryWarehouseRow[]>(
-    []
-  )
+  ] = useState<
+    D2CInventoryWarehouseRow[]
+  >([])
 
   const [
     categories,
     setCategories,
-  ] = useState<D2CInventoryCategoryRow[]>(
-    []
-  )
+  ] = useState<
+    D2CInventoryCategoryRow[]
+  >([])
 
   const [
     loading,
@@ -83,9 +204,9 @@ export default function Inventory() {
   const [
     error,
     setError,
-  ] = useState<string | null>(
-    null
-  )
+  ] = useState<
+    string | null
+  >(null)
 
   const [
     search,
@@ -105,7 +226,8 @@ export default function Inventory() {
 
   useEffect(
     () => {
-      let cancelled = false
+      let cancelled =
+        false
 
       setLoading(true)
       setError(null)
@@ -123,7 +245,9 @@ export default function Inventory() {
             warehouseResponse,
             categoryResponse,
           ]) => {
-            if (cancelled) {
+            if (
+              cancelled
+            ) {
               return
             }
 
@@ -145,10 +269,10 @@ export default function Inventory() {
           }
         )
         .catch(
-          (
-            requestError
-          ) => {
-            if (cancelled) {
+          requestError => {
+            if (
+              cancelled
+            ) {
               return
             }
 
@@ -161,17 +285,25 @@ export default function Inventory() {
               requestError
                 instanceof Error
                 ? requestError.message
-                : 'Could not load inventory analytics.'
+                : (
+                    'Could not load '
+                    + 'inventory analytics.'
+                  )
             )
           }
         )
         .finally(
           () => {
-            if (!cancelled) {
-              setLoading(false)
+            if (
+              !cancelled
+            ) {
+              setLoading(
+                false
+              )
             }
           }
         )
+
 
       return () => {
         cancelled = true
@@ -184,26 +316,24 @@ export default function Inventory() {
   const filteredSkus =
     useMemo(
       () => {
-        const normalizedSearch =
+        const normalized =
           search
             .trim()
             .toLowerCase()
 
         return skus.filter(
-          (
-            row
-          ) => {
+          row => {
             const matchesSearch =
-              !normalizedSearch
+              !normalized
               || row.sku_id
                 .toLowerCase()
                 .includes(
-                  normalizedSearch
+                  normalized
                 )
               || row.product_name
                 .toLowerCase()
                 .includes(
-                  normalizedSearch
+                  normalized
                 )
 
             const matchesCategory =
@@ -214,7 +344,8 @@ export default function Inventory() {
 
             const matchesReorder =
               !reorderOnly
-              || row.is_reorder_candidate
+              || row
+                .is_reorder_candidate
 
             return (
               matchesSearch
@@ -233,12 +364,313 @@ export default function Inventory() {
     )
 
 
-  if (loading) {
+  const metrics =
+    useMemo(
+      () => {
+        if (
+          !summary
+        ) {
+          return []
+        }
+
+        return [
+          buildMetric({
+            metricId:
+              'inventory_cost_value',
+
+            label:
+              'Inventory Cost Value',
+
+            value:
+              summary
+                .inventory_cost_value,
+
+            formattedValue:
+              formatCurrency(
+                summary
+                  .inventory_cost_value
+              ),
+
+            unit:
+              'currency',
+
+            higherIsBetter:
+              false,
+
+            definition:
+              'Current inventory valued at inventory cost.',
+          }),
+
+          buildMetric({
+            metricId:
+              'estimated_trapped_inventory_cost',
+
+            label:
+              'Trapped Inventory Cost',
+
+            value:
+              summary
+                .estimated_trapped_inventory_cost,
+
+            formattedValue:
+              formatCurrency(
+                summary
+                  .estimated_trapped_inventory_cost
+              ),
+
+            unit:
+              'currency',
+
+            higherIsBetter:
+              false,
+          }),
+
+          buildMetric({
+            metricId:
+              'potential_revenue_at_risk',
+
+            label:
+              'Revenue At Risk',
+
+            value:
+              summary
+                .potential_revenue_at_risk,
+
+            formattedValue:
+              formatCurrency(
+                summary
+                  .potential_revenue_at_risk
+              ),
+
+            unit:
+              'currency',
+
+            higherIsBetter:
+              false,
+          }),
+
+          buildMetric({
+            metricId:
+              'overstock_rows',
+
+            label:
+              'Overstock Positions',
+
+            value:
+              summary
+                .overstock_rows,
+
+            formattedValue:
+              formatNumber(
+                summary
+                  .overstock_rows
+              ),
+
+            unit:
+              'count',
+
+            higherIsBetter:
+              false,
+          }),
+
+          buildMetric({
+            metricId:
+              'slow_moving_rows',
+
+            label:
+              'Slow-Moving Positions',
+
+            value:
+              summary
+                .slow_moving_rows,
+
+            formattedValue:
+              formatNumber(
+                summary
+                  .slow_moving_rows
+              ),
+
+            unit:
+              'count',
+
+            higherIsBetter:
+              false,
+          }),
+
+          buildMetric({
+            metricId:
+              'below_reorder_rows',
+
+            label:
+              'Below Reorder Positions',
+
+            value:
+              summary
+                .below_reorder_rows,
+
+            formattedValue:
+              formatNumber(
+                summary
+                  .below_reorder_rows
+              ),
+
+            unit:
+              'count',
+
+            higherIsBetter:
+              false,
+          }),
+        ]
+      },
+      [
+        summary,
+      ]
+    )
+
+
+  const reorderPriorities =
+    useMemo(
+      () =>
+        skus
+          .filter(
+            row =>
+              row.is_reorder_candidate
+          )
+          .slice()
+          .sort(
+            (
+              first,
+              second,
+            ) =>
+              second
+                .potential_revenue_at_risk
+              - first
+                .potential_revenue_at_risk
+          )
+          .slice(
+            0,
+            6
+          ),
+      [
+        skus,
+      ]
+    )
+
+
+  const trappedCapitalSkus =
+    useMemo(
+      () =>
+        skus
+          .filter(
+            row =>
+              row
+                .estimated_trapped_inventory_cost
+              > 0
+          )
+          .slice()
+          .sort(
+            (
+              first,
+              second,
+            ) =>
+              second
+                .estimated_trapped_inventory_cost
+              - first
+                .estimated_trapped_inventory_cost
+          )
+          .slice(
+            0,
+            6
+          ),
+      [
+        skus,
+      ]
+    )
+
+
+  const categoryRisk =
+    useMemo(
+      () =>
+        categories
+          .slice()
+          .sort(
+            (
+              first,
+              second,
+            ) =>
+              second
+                .estimated_trapped_inventory_cost
+              - first
+                .estimated_trapped_inventory_cost
+          ),
+      [
+        categories,
+      ]
+    )
+
+
+  const warehouseRisk =
+    useMemo(
+      () =>
+        warehouses
+          .slice()
+          .sort(
+            (
+              first,
+              second,
+            ) =>
+              second
+                .estimated_trapped_inventory_cost
+              - first
+                .estimated_trapped_inventory_cost
+          ),
+      [
+        warehouses,
+      ]
+    )
+
+
+  function openMetric(
+    selected:
+      MetricContract
+  ) {
+    if (
+      selected.value
+      === null
+      || selected.value
+      === undefined
+    ) {
+      return
+    }
+
+    void drilldown.openMetric({
+      metricId:
+        selected.metric_id,
+
+      value:
+        Number(
+          selected.value
+        ),
+    })
+  }
+
+
+  if (
+    loading
+  ) {
     return (
-      <div className="page">
-        <div className="card">
+      <div className="pl-inventory-v2">
+
+        <div className="pl-page-state">
+
+          <RefreshCcw
+            size={20}
+          />
+
           Loading inventory analytics...
+
         </div>
+
       </div>
     )
   }
@@ -249,509 +681,792 @@ export default function Inventory() {
     || !summary
   ) {
     return (
-      <div className="page">
-        <div className="card error-card">
+      <div className="pl-inventory-v2">
+
+        <div className="pl-page-state error">
+
           <AlertTriangle
             size={20}
           />
 
           <div>
+
             <strong>
               Could not load inventory
             </strong>
 
-            <p>
+            <span>
               {
                 error
-                || 'Unknown error'
+                ?? 'Inventory data is unavailable.'
               }
-            </p>
+            </span>
+
           </div>
+
         </div>
+
       </div>
     )
   }
 
 
   return (
-    <div className="page">
+    <div className="pl-inventory-v2">
 
-      <div className="page-header">
+      <section className="pl-business-hero">
+
         <div>
-          <div className="eyebrow">
-            Inventory analytics
+
+          <div className="pl-page-eyebrow">
+            Working capital intelligence
           </div>
 
-          <h2>
-            Inventory Health
-          </h2>
+          <h1>
+            Inventory Performance
+          </h1>
 
           <p>
-            Current stock position,
-            reorder risk and estimated
-            working-capital exposure.
+            Identify trapped capital,
+            replenishment risk and excess
+            inventory across the current
+            stock snapshot.
           </p>
-        </div>
-      </div>
 
-
-      <div className="metric-grid">
-
-        <div className="card metric-card">
-          <div className="metric-card-top">
-            <div>
-              <div className="metric-label">
-                Inventory at Cost
-              </div>
-
-              <div className="metric-value">
-                {
-                  formatCurrency(
-                    summary.inventory_cost_value
-                  )
-                }
-              </div>
-            </div>
-
-            <div className="metric-icon">
-              <Boxes size={20} />
-            </div>
-          </div>
         </div>
 
 
-        <div className="card metric-card">
-          <div className="metric-label">
-            Retail Value
-          </div>
+        <div className="pl-business-hero-actions">
 
-          <div className="metric-value">
-            {
-              formatCurrency(
-                summary.inventory_retail_value
+          <button
+            type="button"
+            className="pl-secondary-button"
+            onClick={() =>
+              navigate(
+                '/analyst'
               )
             }
-          </div>
+          >
+
+            <Sparkles
+              size={14}
+            />
+
+            Ask ProfitLens
+
+          </button>
+
+
+          <button
+            type="button"
+            className="pl-primary-button"
+            onClick={() =>
+              navigate(
+                '/investigations'
+              )
+            }
+          >
+
+            Investigate inventory
+
+            <ArrowRight
+              size={14}
+            />
+
+          </button>
+
         </div>
 
+      </section>
 
-        <div className="card metric-card">
-          <div className="metric-label">
-            Closing Stock
-          </div>
 
-          <div className="metric-value">
+      <section className="pl-inventory-strip">
+
+        <div>
+
+          <Boxes
+            size={17}
+          />
+
+          <span>
+            Stock Units
+          </span>
+
+          <strong>
             {
               formatNumber(
-                summary.total_closing_stock_units
+                summary
+                  .total_closing_stock_units
               )
             }
-          </div>
+          </strong>
 
-          <div className="metric-subtitle">
-            units
-          </div>
         </div>
 
 
-        <div className="card metric-card">
-          <div className="metric-label">
-            SKUs
-          </div>
+        <div>
 
-          <div className="metric-value">
+          <PackageSearch
+            size={17}
+          />
+
+          <span>
+            Total SKUs
+          </span>
+
+          <strong>
             {
               formatNumber(
                 summary.total_skus
               )
             }
-          </div>
+          </strong>
 
-          <div className="metric-subtitle">
-            across {
-              summary.warehouses
-            } warehouses
-          </div>
         </div>
 
 
-        <div className="card metric-card">
-          <div className="metric-label">
-            Below Reorder
-          </div>
-
-          <div className="metric-value">
-            {
-              formatNumber(
-                summary.below_reorder_rows
-              )
-            }
-          </div>
-
-          <div className="metric-subtitle">
-            SKU × warehouse positions
-          </div>
-        </div>
-
-
-        <div className="card metric-card">
-          <div className="metric-label">
-            Out of Stock
-          </div>
-
-          <div className="metric-value">
-            {
-              formatNumber(
-                summary.out_of_stock_rows
-              )
-            }
-          </div>
-        </div>
-
-
-        <div className="card metric-card">
-          <div className="metric-label">
-            Revenue at Risk
-          </div>
-
-          <div className="metric-value">
-            {
-              formatCurrency(
-                summary.potential_revenue_at_risk
-              )
-            }
-          </div>
-
-          <div className="metric-subtitle">
-            reorder-gap estimate
-          </div>
-        </div>
-
-
-        <div className="card metric-card">
-          <div className="metric-label">
-            Trapped Inventory
-          </div>
-
-          <div className="metric-value">
-            {
-              formatCurrency(
-                summary
-                  .estimated_trapped_inventory_cost
-              )
-            }
-          </div>
-
-          <div className="metric-subtitle">
-            estimated excess stock at cost
-          </div>
-        </div>
-
-      </div>
-
-
-      <div className="section-heading">
         <div>
-          <h2>
-            Warehouse Health
-          </h2>
 
-          <p>
-            Inventory position by fulfilment location.
-          </p>
+          <Warehouse
+            size={17}
+          />
+
+          <span>
+            Warehouses
+          </span>
+
+          <strong>
+            {
+              formatNumber(
+                summary.warehouses
+              )
+            }
+          </strong>
+
         </div>
-      </div>
 
 
-      <div className="card">
-        <div className="table-wrap">
-          <table className="data-table">
+        <div>
 
-            <thead>
-              <tr>
-                <th>Warehouse</th>
-                <th>SKUs</th>
-                <th>Closing Stock</th>
-                <th>Units Sold</th>
-                <th>Inventory Cost</th>
-                <th>Below Reorder</th>
-                <th>Overstock</th>
-                <th>Revenue at Risk</th>
-                <th>Trapped Cost</th>
-              </tr>
-            </thead>
+          <CircleDollarSign
+            size={17}
+          />
 
-            <tbody>
-              {
-                warehouses.map(
-                  (
-                    row
-                  ) => (
-                    <tr
-                      key={
+          <span>
+            Retail Value
+          </span>
+
+          <strong>
+            {
+              formatCompactCurrency(
+                summary
+                  .inventory_retail_value
+              )
+            }
+          </strong>
+
+        </div>
+
+      </section>
+
+
+      <section>
+
+        <div className="pl-section-header">
+
+          <div>
+
+            <h2>
+              Inventory health
+            </h2>
+
+            <p>
+              Working-capital and availability
+              risks from the current snapshot.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div className="pl-metric-grid">
+
+          {
+            metrics.map(
+              item => (
+                <MetricCard
+                  key={
+                    item.metric_id
+                  }
+                  metric={
+                    item
+                  }
+                  onClick={
+                    openMetric
+                  }
+                />
+              )
+            )
+          }
+
+        </div>
+
+      </section>
+
+
+      <section className="pl-inventory-risk-strip">
+
+        <div>
+
+          <span>
+            Low Stock
+          </span>
+
+          <strong>
+            {
+              formatNumber(
+                summary
+                  .low_stock_rows
+              )
+            }
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <span>
+            Out of Stock
+          </span>
+
+          <strong>
+            {
+              formatNumber(
+                summary
+                  .out_of_stock_rows
+              )
+            }
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <span>
+            SKU-Warehouse Positions
+          </span>
+
+          <strong>
+            {
+              formatNumber(
+                summary
+                  .sku_warehouse_rows
+              )
+            }
+          </strong>
+
+        </div>
+
+
+        <div>
+
+          <span>
+            Coverage Basis
+          </span>
+
+          <strong>
+            Stock / Sales
+          </strong>
+
+        </div>
+
+      </section>
+
+
+      <section className="pl-inventory-analysis-grid">
+
+        <div className="pl-founder-panel">
+
+          <div className="pl-panel-header">
+
+            <div>
+
+              <span className="pl-page-eyebrow">
+                Replenishment
+              </span>
+
+              <h2>
+                Highest revenue-at-risk SKUs
+              </h2>
+
+            </div>
+
+            <TriangleAlert
+              size={18}
+            />
+
+          </div>
+
+
+          <div className="pl-inventory-priority-list">
+
+            {
+              reorderPriorities.map(
+                row => (
+                  <div
+                    key={
+                      row.sku_id
+                    }
+                    className="pl-inventory-priority-row risk"
+                  >
+
+                    <div>
+
+                      <strong>
+                        {
+                          row.product_name
+                        }
+                      </strong>
+
+                      <span>
+                        {
+                          row.sku_id
+                        }
+                        {' · '}
+                        {
+                          row.category
+                        }
+                      </span>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+                        Revenue risk
+                      </span>
+
+                      <strong>
+                        {
+                          formatCurrency(
+                            row
+                              .potential_revenue_at_risk
+                          )
+                        }
+                      </strong>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+                        Coverage
+                      </span>
+
+                      <strong>
+                        {
+                          row
+                            .stock_to_sales_ratio
+                            .toFixed(2)
+                        }x
+                      </strong>
+
+                    </div>
+
+                  </div>
+                )
+              )
+            }
+
+          </div>
+
+        </div>
+
+
+        <div className="pl-founder-panel">
+
+          <div className="pl-panel-header">
+
+            <div>
+
+              <span className="pl-page-eyebrow">
+                Working capital
+              </span>
+
+              <h2>
+                Highest trapped-capital SKUs
+              </h2>
+
+            </div>
+
+            <CircleDollarSign
+              size={18}
+            />
+
+          </div>
+
+
+          <div className="pl-inventory-priority-list">
+
+            {
+              trappedCapitalSkus.map(
+                row => (
+                  <div
+                    key={
+                      row.sku_id
+                    }
+                    className="pl-inventory-priority-row"
+                  >
+
+                    <div>
+
+                      <strong>
+                        {
+                          row.product_name
+                        }
+                      </strong>
+
+                      <span>
+                        {
+                          row.sku_id
+                        }
+                        {' · '}
+                        {
+                          row.category
+                        }
+                      </span>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+                        Trapped cost
+                      </span>
+
+                      <strong>
+                        {
+                          formatCurrency(
+                            row
+                              .estimated_trapped_inventory_cost
+                          )
+                        }
+                      </strong>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+                        Coverage
+                      </span>
+
+                      <strong>
+                        {
+                          row
+                            .stock_to_sales_ratio
+                            .toFixed(2)
+                        }x
+                      </strong>
+
+                    </div>
+
+                  </div>
+                )
+              )
+            }
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <section className="pl-inventory-analysis-grid">
+
+        <div className="pl-founder-panel">
+
+          <div className="pl-panel-header">
+
+            <div>
+
+              <span className="pl-page-eyebrow">
+                Warehouse exposure
+              </span>
+
+              <h2>
+                Working capital by warehouse
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div className="pl-inventory-warehouse-list">
+
+            {
+              warehouseRisk.map(
+                row => (
+                  <div
+                    key={
+                      row.warehouse
+                    }
+                    className="pl-inventory-warehouse-row"
+                  >
+
+                    <strong>
+                      {
                         row.warehouse
                       }
-                    >
-                      <td>
-                        <strong>
-                          {
-                            row.warehouse
-                          }
-                        </strong>
-                      </td>
+                    </strong>
 
-                      <td>
-                        {
-                          formatNumber(
-                            row.skus
-                          )
-                        }
-                      </td>
 
-                      <td>
-                        {
-                          formatNumber(
-                            row.closing_stock
-                          )
-                        }
-                      </td>
+                    <div>
 
-                      <td>
-                        {
-                          formatNumber(
-                            row.units_sold
-                          )
-                        }
-                      </td>
+                      <span>
+                        Trapped
+                      </span>
 
-                      <td>
+                      <strong>
                         {
-                          formatCurrency(
-                            row.inventory_cost_value
-                          )
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          row.below_reorder_rows
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          row.overstock_rows
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          formatCurrency(
-                            row
-                              .potential_revenue_at_risk
-                          )
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          formatCurrency(
+                          formatCompactCurrency(
                             row
                               .estimated_trapped_inventory_cost
                           )
                         }
-                      </td>
-                    </tr>
-                  )
+                      </strong>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+                        Revenue Risk
+                      </span>
+
+                      <strong>
+                        {
+                          formatCompactCurrency(
+                            row
+                              .potential_revenue_at_risk
+                          )
+                        }
+                      </strong>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+                        Coverage
+                      </span>
+
+                      <strong>
+                        {
+                          row
+                            .stock_to_sales_ratio
+                            .toFixed(2)
+                        }x
+                      </strong>
+
+                    </div>
+
+                  </div>
                 )
-              }
-            </tbody>
+              )
+            }
 
-          </table>
+          </div>
+
         </div>
-      </div>
 
 
-      <div className="section-heading">
-        <div>
-          <h2>
-            Category Inventory
-          </h2>
+        <div className="pl-founder-panel">
 
-          <p>
-            Inventory exposure and stock risk
-            by product category.
-          </p>
-        </div>
-      </div>
+          <div className="pl-panel-header">
+
+            <div>
+
+              <span className="pl-page-eyebrow">
+                Category exposure
+              </span>
+
+              <h2>
+                Capital tied up by category
+              </h2>
+
+            </div>
+
+          </div>
 
 
-      <div className="card">
-        <div className="table-wrap">
-          <table className="data-table">
+          <div className="pl-inventory-category-list">
 
-            <thead>
-              <tr>
-                <th>Category</th>
-                <th>SKUs</th>
-                <th>Closing Stock</th>
-                <th>Units Sold</th>
-                <th>Inventory Cost</th>
-                <th>Below Reorder</th>
-                <th>Overstock</th>
-                <th>Revenue at Risk</th>
-                <th>Trapped Cost</th>
-              </tr>
-            </thead>
+            {
+              categoryRisk.map(
+                row => (
+                  <div
+                    key={
+                      row.category
+                    }
+                    className="pl-inventory-category-row"
+                  >
 
-            <tbody>
-              {
-                categories.map(
-                  (
-                    row
-                  ) => (
-                    <tr
-                      key={
+                    <strong>
+                      {
                         row.category
                       }
-                    >
-                      <td>
-                        <strong>
-                          {
-                            row.category
-                          }
-                        </strong>
-                      </td>
+                    </strong>
 
-                      <td>
-                        {
-                          formatNumber(
-                            row.skus
-                          )
-                        }
-                      </td>
 
-                      <td>
-                        {
-                          formatNumber(
-                            row.closing_stock
-                          )
-                        }
-                      </td>
+                    <div>
 
-                      <td>
-                        {
-                          formatNumber(
-                            row.units_sold
-                          )
-                        }
-                      </td>
+                      <span>
+                        Trapped
+                      </span>
 
-                      <td>
+                      <strong>
                         {
-                          formatCurrency(
-                            row.inventory_cost_value
-                          )
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          row.below_reorder_rows
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          row.overstock_rows
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          formatCurrency(
-                            row
-                              .potential_revenue_at_risk
-                          )
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          formatCurrency(
+                          formatCompactCurrency(
                             row
                               .estimated_trapped_inventory_cost
                           )
                         }
-                      </td>
-                    </tr>
-                  )
+                      </strong>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+                        Overstock
+                      </span>
+
+                      <strong>
+                        {
+                          formatNumber(
+                            row
+                              .overstock_rows
+                          )
+                        }
+                      </strong>
+
+                    </div>
+
+
+                    <div>
+
+                      <span>
+                        Coverage
+                      </span>
+
+                      <strong>
+                        {
+                          row
+                            .stock_to_sales_ratio
+                            .toFixed(2)
+                        }x
+                      </strong>
+
+                    </div>
+
+                  </div>
                 )
-              }
-            </tbody>
+              )
+            }
 
-          </table>
+          </div>
+
         </div>
-      </div>
+
+      </section>
 
 
-      <div className="section-heading">
-        <div>
-          <h2>
-            SKU Inventory
-          </h2>
+      <section className="pl-founder-panel">
 
-          <p>
-            Search for reorder candidates
-            and excess-stock exposure.
-          </p>
+        <div className="pl-panel-header">
+
+          <div>
+
+            <span className="pl-page-eyebrow">
+              SKU control centre
+            </span>
+
+            <h2>
+              Inventory priorities
+            </h2>
+
+          </div>
+
+
+          <strong className="pl-inventory-result-count">
+            {
+              formatNumber(
+                filteredSkus.length
+              )
+            } SKUs
+          </strong>
+
         </div>
-      </div>
 
 
-      <div className="card">
+        <div className="pl-inventory-filters">
 
-        <div className="filter-bar">
+          <label className="pl-inventory-search">
 
-          <div className="search-control">
-            <PackageSearch
-              size={16}
+            <Search
+              size={15}
             />
 
             <input
-              value={search}
-              onChange={
-                (
-                  event
-                ) => setSearch(
-                  event.target.value
-                )
+              type="search"
+              value={
+                search
               }
-              placeholder="Search SKU or product..."
+              onChange={
+                event =>
+                  setSearch(
+                    event.target.value
+                  )
+              }
+              placeholder="Search SKU or product"
             />
-          </div>
+
+          </label>
 
 
           <select
-            className="select"
-            value={categoryFilter}
-            onChange={
-              (
-                event
-              ) => setCategoryFilter(
-                event.target.value
-              )
+            value={
+              categoryFilter
             }
+            onChange={
+              event =>
+                setCategoryFilter(
+                  event.target.value
+                )
+            }
+            aria-label="Inventory category"
           >
+
             <option value="All">
               All categories
             </option>
 
             {
               categories.map(
-                (
-                  row
-                ) => (
+                row => (
                   <option
                     key={
                       row.category
@@ -767,17 +1482,19 @@ export default function Inventory() {
                 )
               )
             }
+
           </select>
 
 
-          <label className="checkbox-control">
+          <label className="pl-inventory-toggle">
+
             <input
               type="checkbox"
-              checked={reorderOnly}
+              checked={
+                reorderOnly
+              }
               onChange={
-                (
-                  event
-                ) =>
+                event =>
                   setReorderOnly(
                     event.target.checked
                   )
@@ -785,53 +1502,57 @@ export default function Inventory() {
             />
 
             Reorder candidates only
+
           </label>
 
         </div>
 
 
         <div className="table-wrap">
+
           <table className="data-table">
 
             <thead>
+
               <tr>
+                <th>SKU</th>
                 <th>Product</th>
                 <th>Category</th>
                 <th>Closing Stock</th>
                 <th>Units Sold</th>
-                <th>Reorder Point</th>
-                <th>Below Reorder Locations</th>
-                <th>Stock / Sales</th>
-                <th>Revenue at Risk</th>
+                <th>Coverage</th>
+                <th>Revenue Risk</th>
                 <th>Trapped Cost</th>
+                <th>Reorder Locations</th>
+                <th>Overstock Locations</th>
               </tr>
+
             </thead>
 
+
             <tbody>
+
               {
                 filteredSkus.map(
-                  (
-                    row
-                  ) => (
+                  row => (
                     <tr
                       key={
                         row.sku_id
                       }
                     >
-                      <td>
-                        <div>
-                          <strong>
-                            {
-                              row.product_name
-                            }
-                          </strong>
 
-                          <div className="table-subtext">
-                            {
-                              row.sku_id
-                            }
-                          </div>
-                        </div>
+                      <td>
+                        <strong>
+                          {
+                            row.sku_id
+                          }
+                        </strong>
+                      </td>
+
+                      <td>
+                        {
+                          row.product_name
+                        }
                       </td>
 
                       <td>
@@ -858,25 +1579,10 @@ export default function Inventory() {
 
                       <td>
                         {
-                          formatNumber(
-                            row.reorder_point
-                          )
-                        }
-                      </td>
-
-                      <td>
-                        {
-                          row
-                            .below_reorder_locations
-                        }
-                      </td>
-
-                      <td>
-                        {
                           row
                             .stock_to_sales_ratio
                             .toFixed(2)
-                        }
+                        }x
                       </td>
 
                       <td>
@@ -896,53 +1602,92 @@ export default function Inventory() {
                           )
                         }
                       </td>
+
+                      <td>
+                        {
+                          formatNumber(
+                            row
+                              .below_reorder_locations
+                          )
+                        }
+                      </td>
+
+                      <td>
+                        {
+                          formatNumber(
+                            row
+                              .overstock_locations
+                          )
+                        }
+                      </td>
+
                     </tr>
                   )
                 )
               }
+
             </tbody>
 
           </table>
+
         </div>
 
-
-        <div className="table-footer">
-          Showing {
-            formatNumber(
-              filteredSkus.length
-            )
-          } of {
-            formatNumber(
-              skus.length
-            )
-          } SKUs
-        </div>
-
-      </div>
+      </section>
 
 
-      <div className="card limitation-card">
-        <div>
-          <strong>
-            Inventory scope
-          </strong>
-
-          <p>
-            Inventory is currently a snapshot,
-            not a dated historical series.
-            Stock-to-sales ratio uses the period
-            represented by the inventory dataset,
-            so ProfitLens does not label it as
-            days of inventory or days of cover.
-            Overstock and trapped-capital metrics
-            are deterministic heuristic signals.
-          </p>
-        </div>
+      <section className="pl-inventory-scope-note">
 
         <Warehouse
           size={20}
         />
-      </div>
+
+        <div>
+
+          <strong>
+            Current inventory snapshot
+          </strong>
+
+          <p>
+            Inventory analytics currently
+            represent a current stock snapshot.
+            Historical inventory snapshots are
+            not available, so ProfitLens does
+            not display inventory trends or
+            historical stock movement.
+          </p>
+
+        </div>
+
+      </section>
+
+
+      <MetricDrilldownDrawer
+        open={
+          drilldown.open
+        }
+
+        loading={
+          drilldown.loading
+        }
+
+        error={
+          drilldown.error
+        }
+
+        data={
+          drilldown.data
+        }
+
+        onClose={
+          drilldown.closeMetric
+        }
+
+        onSuggestedQuestion={() =>
+          navigate(
+            '/analyst'
+          )
+        }
+      />
 
     </div>
   )

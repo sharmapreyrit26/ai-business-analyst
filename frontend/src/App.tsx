@@ -1,6 +1,7 @@
 
 import {
   useEffect,
+  useRef,
   useState,
 } from 'react'
 
@@ -10,23 +11,34 @@ import {
 } from 'react-router-dom'
 
 import { api } from './api/profitlens'
+
+import {
+  useAnalytics,
+} from './platform/AnalyticsProvider'
 import { Header } from './components/Header'
 import { Sidebar } from './components/Sidebar'
 
 import Analyst from './pages/Analyst'
 import Customers from './pages/Customers'
 import Logistics from './pages/Logistics'
-import Overview from './pages/Overview'
+import BusinessHealth from './pages/BusinessHealth'
+import RevenueProfit from './pages/RevenueProfit'
 import Products from './pages/Products'
 import Scenario from './pages/Scenario'
+import ScenarioV2 from './pages/ScenarioV2'
 import Marketing from './pages/Marketing'
 import Inventory from './pages/Inventory'
+import Investigations from './pages/Investigations'
 
 export default function App() {
-  const [
+  const {
     month,
     setMonth,
-  ] = useState('2025-11')
+  } = useAnalytics()
+
+
+  const hasUserSelectedMonth =
+    useRef(false)
 
   const [
     months,
@@ -49,8 +61,15 @@ export default function App() {
           data.partial_months
         )
 
+        const currentMonthIsValid =
+          data.months.includes(
+            month
+          )
+
         if (
           data.default_month
+          && !hasUserSelectedMonth.current
+          && !currentMonthIsValid
         ) {
           setMonth(
             data.default_month
@@ -74,7 +93,10 @@ export default function App() {
           month={month}
           months={months}
           partialMonths={partialMonths}
-          onMonthChange={setMonth}
+          onMonthChange={(nextMonth) => {
+            hasUserSelectedMonth.current = true
+            setMonth(nextMonth)
+          }}
         />
 
         <div className="content">
@@ -82,7 +104,16 @@ export default function App() {
             <Route
               path="/"
               element={
-                <Overview
+                <BusinessHealth
+                  month={month}
+                />
+              }
+            />
+
+            <Route
+              path="/revenue-profit"
+              element={
+                <RevenueProfit
                   month={month}
                 />
               }
@@ -156,9 +187,18 @@ export default function App() {
             />
 
             <Route
+              path="/investigations"
+              element={
+                <Investigations
+                  month={month}
+                />
+              }
+            />
+
+            <Route
               path="/scenario"
               element={
-                <Scenario
+                <ScenarioV2
                   month={month}
                 />
               }
